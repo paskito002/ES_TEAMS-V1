@@ -38,6 +38,16 @@
 * [![YOUTUBE](https://img.shields.io/badge/HOW_TO_DEPLOY-red?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/hJTYSquTtE8)
 
 
+### 2. DEPLOY ON GOOGLE CONSOLE
+
+1. Deploy ES TEAMS V1 on Console without a Panel[NOT 24/7 ACTIVE] 
+    <br>
+    <a href='https://console.cloud.google.com' target="_blank"><img alt='DEPLOY' src='https://img.shields.io/badge/-DEPLOY-black?style=for-the-badge&logo=bot-hosting.net&logoColor=white'/></a>
+
+## WATCH CONSOLE TUTORIAL VIDEO.
+* [![YOUTUBE](https://img.shields.io/badge/HOW_TO_DEPLOY-red?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/VktpLnc8PK8)
+
+
     <h2 align="center"> ⚠️ NOTE  </h2>
 ## ES_TEAMS-V1 SCRIPT IS NOT OPENLY ALLOWED TO USED IN ANY OF YOUR PROJECTS BE WARNED!!! 
 
