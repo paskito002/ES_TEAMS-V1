@@ -38,7 +38,7 @@
 * [![YOUTUBE](https://img.shields.io/badge/HOW_TO_DEPLOY-red?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/hJTYSquTtE8)
 
 
-### 2. DEPLOY ON GOOGLE CONSOLE
+### 3. DEPLOY ON GOOGLE CONSOLE
 
 1. Deploy ES TEAMS V1 on Console without a Panel. Note that it doesnt run 24/7
     <br>
