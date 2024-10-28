@@ -19,6 +19,8 @@
     </p>
 <p align="center">
 
+## BOT IS NOW FIXED
+
  ## ES_TEAMS-V1 Deployment Methods
 
 ### 1. FORK THIS REPO
