@@ -71,7 +71,7 @@
 
 <br>
 
-* [🧑‍💻 Follow ES TEAMS-V2 Whatsapp Channel🧑‍💻](https://www.whatsapp.com/channel/0029Vaj1vKSK5cDDT4tVvY1y)
+* [🧑‍💻 Follow ES TEAMS Whatsapp Channel🧑‍💻](https://www.whatsapp.com/channel/0029Vaj1vKSK5cDDT4tVvY1y)
 
 * [🧑‍💻 Follow ES TEAMS TECH on Youtube 🧑‍💻](https://youtube.com/@esteams)
 
