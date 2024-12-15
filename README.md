@@ -62,7 +62,6 @@
 
 # DO YOU WANT TO GET THE PREMIUM VERSION ?
 <br>
-    <br>
     <a href='https://t.me/examsolutionteam' target="_blank"><img alt='PURCHASE' src='https://img.shields.io/badge/-PURCHASE_FILE-blue?style=for-the-badge&logo=telegram&logoColor=white'/></a>
 
 
