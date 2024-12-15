@@ -59,6 +59,11 @@
 
 `Contact ES TEAMS TECH to Purchase a Private Fast Panel Now!!!`
 
+# DO YOU WANT TO GET THE PREMIUM VERSION OF ES TEAMS V1?
+<br>
+    <a href='https://t.me/examsolutionteam' target="_blank"><img alt='CLICK HERE' src='https://img.shields.io/badge/-CLICK HERE-black?style=for-the-badge&logo=telegram&logoColor=white
+
+
 
 ## ```Connect With Me```<img src="https://github.com/0xAbdulKhalid/0xAbdulKhalid/raw/main/assets/mdImages/handshake.gif" width ="80"></h1> 
  <br> 
