@@ -46,7 +46,7 @@
 
 | Panel Sizes                       | Panel Prices                                         
 | ---------------------------------| ------------------------------
-| 1GB RAM PANEL                    | 500  NAIRA    ✅   
+| 1GB RAM PANEL                    | 500  NAIRA   ✅   
 | 2GB RAM PANEL                    | 1000 NAIRA   ✅                
 | 3GB RAM PANEL                    | 1500 NAIRA   ✅   
 | 4GB RAM PANEL                    | 2000 NAIRA   ✅             
