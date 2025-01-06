@@ -41,12 +41,12 @@ const chalk = require('chalk');
 //owmner v card
 global.ytname = "YT: esteams" //ur yt chanel name
 global.socialm = "GitHub: paskito002" //ur github or insta name
-global.location = "Nigeria, Cross River, Calabar" //ur location
+global.location = "Nigeria, Lagos, Seaside" //ur location
 
 //new
 global.botname = ' `𝐄𝐒 𝐓𝐄𝐀𝐌𝐒 𝐕𝟏`' //ur bot name
-global.ownernumber = ['2349037524605'] //ur owner number, dont add more than one
-global.ownername = '𝗘𝗦 𝗧𝗘𝗔𝗠𝗦 𝗧𝗘𝗖𝗛' //ur owner name
+global.ownernumber = ['2347030626048'] //ur owner number, dont add more than one
+global.ownername = '꧁𝓦𝓮𝓪𝓵𝓽𝓱☠︎𝓜𝓸𝓷𝓮𝔂꧂' //ur owner name
 global.websitex = "https://YouTube.com/@esteams"
 global.wagc = "https://whatsapp.com/channel/0029Vaj1vKSK5cDDT4tVvY1y"
 global.themeemoji = '⛩'
@@ -54,9 +54,9 @@ global.wm = "Es Teams Bot Inc."
 global.botscript = 'https://github.com/paskito002/ES_TEAMS-V1' //script link
 global.packname = "ES TEAMS"
 global.author = "MΛDΣ BY ES TEAMS TECH"
-global.creator = "2349037524605@s.whatsapp.net"
+global.creator = "2349165763385"
 global.xprefix = '.'
-global.premium = ["2349037524605"] // Premium User
+global.premium = ["2347030626048"] // Premium User
 
 //bot sett
 global.typemenu = 'v2' // menu type 'v1' => 'v12'
