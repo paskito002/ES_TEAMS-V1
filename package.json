@@ -1,6 +1,6 @@
 {
-  "name": "ES TEAMS",
-  "version": "1.1.0",
+  "name": "ES_TEAMS V1",
+  "version": "1.0.0",
   "description": "Bot WhatsApp Using Lib Baileys Multi Device",
   "main": "start.js",
   "type": "commonjs",
@@ -8,12 +8,12 @@
     "start": "node start.js"              
   },
   "keywords": [
-    "Whatsapp Bot by Es Teams"
+    "Whatsapp Bot By ES TEAMS TECH"
   ],
-  "author": "ES TEAMS",
+  "author": "ES TEAMS TECH",
   "license": "MIT",
   "dependencies": {
-    "@whiskeysockets/baileys" : "latest",
+    "@whiskeysockets/baileys" : "^6.7.7",
     "@adiwajshing/keyed-db": "^0.2.4",
     "@bochilteam/scraper": "^4.2.4",
     "@develoka/angka-terbilang-js": "^1.4.2",
@@ -29,7 +29,6 @@
     "brainly-scraper": "^1.0.3",
     "cfonts": "^3.1.1",
     "chalk": "^4.1.2",
-    "figlet":"^1.5.2",   
     "cheerio": "^1.0.0-rc.10",
     "colors": "^1.4.0",
     "cookie": "^0.5.0",
