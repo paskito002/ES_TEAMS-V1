@@ -32,7 +32,7 @@
 
 1. If you don't have an account in PANEL, create one and deploy.
     <br>
-    <a href='https://dashboard.katabump.com/auth/login#edfb0f' target="_blank"><img alt='DEPLOY' src='https://img.shields.io/badge/-DEPLOY-black?style=for-the-badge&logo=katabump.com&logoColor=white'/></a>
+    <a href='https://dashboard.katabump.com/auth/login#edfb0f' target="_blank"><img alt='DEPLOY' src='https://img.shields.io/badge/-DEPLOY-black?style=for-the-badge&logo=bot-hosting.net&logoColor=white'/></a>
 
 ## WATCH PANEL TUTORIAL VIDEO.
 * [![YOUTUBE](https://img.shields.io/badge/HOW_TO_DEPLOY-red?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/hJTYSquTtE8)
