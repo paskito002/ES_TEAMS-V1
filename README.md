@@ -76,11 +76,11 @@
 
 <br>
 
-* [🧑‍💻 Follow ES TEAMS Whatsapp Channel🧑‍💻](https://www.whatsapp.com/channel/0029Vaj1vKSK5cDDT4tVvY1y)
+* [🧑‍💻 Follow ES TEAMS Whatsapp Channel🧑‍💻](https://whatsapp.com/channel/0029VaoYmHz9MF98STZg4w1h)
 
 * [🧑‍💻 Follow ES TEAMS TECH on Youtube 🧑‍💻](https://youtube.com/@esteams)
 
-* [✅ Join Public Group ⚡](https://www.whatsapp.com/channel/0029Vaj1vKSK5cDDT4tVvY1y)
+* [✅ Join Public Group ⚡](https://chat.whatsapp.com/CGN76JlxKxEGjrYVFXd5la)
 
 
 - *ES_TEAMS-V1 is not made by `WhatsApp Inc.` Sometimes or misusing the bot might `ban` your `WhatsApp account!`*
