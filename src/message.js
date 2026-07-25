@@ -50,19 +50,19 @@ const premium = JSON.parse(fs.readFileSync('./database/premium.json'));
 const { isUrl, getGroupAdmins, generateMessageTag, getBuffer, getSizeMedia, fetchJson, sleep, getTypeUrlMedia } = require('../lib/function');
 const { jidNormalizedUser, proto, getBinaryNodeChildren, generateWAMessageContent, generateForwardMessageContent, prepareWAMessageMedia, delay, areJidsSameUser, extractMessageContent, generateMessageID, downloadContentFromMessage, generateWAMessageFromContent, jidDecode, generateWAMessage, toBuffer, getContentType, getDevice } = require('@whiskeysockets/baileys');
 
-async function GroupUpdate(XliconBotInc, update) {
+async function GroupUpdate(Esteams, update) {
 	try {
 		for (let n of update) {
 			let setinfo = global.db.groups[n.id].setinfo
 			if (setinfo) {
 				let profile;
 				try {
-					profile = await XliconBotInc.profilePictureUrl(n.id, 'image');
+					profile = await Esteams.profilePictureUrl(n.id, 'image');
 				} catch {
 					profile = 'https://i.ibb.co/qCTXK9p/ES-TEAMS-V1.jpg';
 				}
 				if (n.announce) {
-					await XliconBotInc.sendMessage(n.id, {
+					await Esteams.sendMessage(n.id, {
 						text: 'Group has been closed by Admin',
 						contextInfo: {
 							externalAdReply: {
@@ -76,7 +76,7 @@ async function GroupUpdate(XliconBotInc, update) {
 						}
 					});
 				} else if (n.announce == false) {
-					await XliconBotInc.sendMessage(n.id, {
+					await Esteams.sendMessage(n.id, {
 						text: 'The group has been opened by the Admin',
 						contextInfo: {
 							externalAdReply: {
@@ -90,7 +90,7 @@ async function GroupUpdate(XliconBotInc, update) {
 						}
 					});
 				} else if (n.restrict) {
-					await XliconBotInc.sendMessage(n.id, {
+					await Esteams.sendMessage(n.id, {
 						text: 'Now only Admin can edit Group info',
 						contextInfo: {
 							externalAdReply: {
@@ -104,7 +104,7 @@ async function GroupUpdate(XliconBotInc, update) {
 						}
 					});
 				} else if (n.restrict == false) {
-					await XliconBotInc.sendMessage(n.id, {
+					await Esteams.sendMessage(n.id, {
 						text: 'Now Participants can edit Group info',
 						contextInfo: {
 							externalAdReply: {
@@ -118,7 +118,7 @@ async function GroupUpdate(XliconBotInc, update) {
 						}
 					});
 				} else {
-					await XliconBotInc.sendMessage(n.id, {
+					await Esteams.sendMessage(n.id, {
 						text: 'Group Subject is changed to ' + n.subject,
 						contextInfo: {
 							externalAdReply: {
@@ -139,15 +139,15 @@ async function GroupUpdate(XliconBotInc, update) {
 	}
 }
 
-async function GroupParticipantsUpdate(XliconBotInc, { id, participants, action }) {
+async function GroupParticipantsUpdate(Esteams, { id, participants, action }) {
 	try {
 		let welcome = global.db.groups[id].welcome
 		if (welcome) {
-			let metadata = await XliconBotInc.groupMetadata(id);
+			let metadata = await Esteams.groupMetadata(id);
 			for (let n of participants) {
 				let profile;
 				try {
-					profile = await XliconBotInc.profilePictureUrl(n, 'image');
+					profile = await Esteams.profilePictureUrl(n, 'image');
 				} catch {
 					profile = 'https://i.ibb.co/qCTXK9p/ES-TEAMS-V1.jpg';
 				}
@@ -188,7 +188,7 @@ let msgs = generateWAMessageFromContent(id, {
           }),
           header: proto.Message.InteractiveMessage.Header.create({
           hasMediaAttachment: false,
-          ...await prepareWAMessageMedia({ image: XliconWlcm }, { upload: XliconBotInc.waUploadToServer })
+          ...await prepareWAMessageMedia({ image: XliconWlcm }, { upload: Esteams.waUploadToServer })
           }),
           nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
             buttons: [{
@@ -210,7 +210,7 @@ let msgs = generateWAMessageFromContent(id, {
     }
   }
 }, {})
-await XliconBotInc.relayMessage(id, msgs.message, {})
+await Esteams.relayMessage(id, msgs.message, {})
 				} else if (action == 'remove') {
 				let xliconName = n
                 const xlicondate = moment.tz('Asia/Kolkata').locale('en-IN').format('DD/MM/YYYY');
@@ -247,7 +247,7 @@ let msgs = generateWAMessageFromContent(id, {
           }),
           header: proto.Message.InteractiveMessage.Header.create({
           hasMediaAttachment: false,
-          ...await prepareWAMessageMedia({ image: XliconLft }, { upload: XliconBotInc.waUploadToServer })
+          ...await prepareWAMessageMedia({ image: XliconLft }, { upload: Esteams.waUploadToServer })
           }),
           nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
             buttons: [{
@@ -269,13 +269,13 @@ let msgs = generateWAMessageFromContent(id, {
     }
   }
 }, {})
-await XliconBotInc.relayMessage(id, msgs.message, {})
+await Esteams.relayMessage(id, msgs.message, {})
 				} else if (action == 'promote') {
 const xlicontime = moment().tz('Asia/Kolkata').locale('en-IN').format('HH:mm:ss');
 const xlicondate = moment.tz('Asia/Kolkata').locale('en-IN').format('DD/MM/YYYY');
 let xliconName = n
 xliconbody = ` 𝗖𝗼𝗻𝗴𝗿𝗮𝘁🎉 @${xliconName.split("@")[0]}, you have been *promoted* to *admin* 🥳`
-   await XliconBotInc.sendMessage(id,
+   await Esteams.sendMessage(id,
  { text: xliconbody,
  contextInfo:{
  mentionedJid:[n],
@@ -292,7 +292,7 @@ const xlicontime = moment().tz('Asia/Kolkata').locale('en-IN').format('HH:mm:ss'
 const xlicondate = moment.tz('Asia/Kolkata').locale('en-IN').format('DD/MM/YYYY');
 let xliconName = n
 xliconbody = `𝗢𝗼𝗽𝘀‼️ @${xliconName.split("@")[0]}, you have been *demoted* from *admin* 😬`
-await XliconBotInc.sendMessage(id,
+await Esteams.sendMessage(id,
  { text: xliconbody,
  contextInfo:{
  mentionedJid:[n],
@@ -311,40 +311,40 @@ await XliconBotInc.sendMessage(id,
 		return;
 	}
 }
-async function MessagesUpsert(XliconBotInc, message, store) {
+async function MessagesUpsert(Esteams, message, store) {
 	try {
-		let botNumber = await XliconBotInc.decodeJid(XliconBotInc.user.id);
+		let botNumber = await Esteams.decodeJid(Esteams.user.id);
 		const msg = message.messages[0];
 		const type = msg.message ? (getContentType(msg.message) || Object.keys(msg.message)[0]) : '';
-		if (!XliconBotInc.public && !msg.key.fromMe && message.type === 'notify') return
+		if (!Esteams.public && !msg.key.fromMe && message.type === 'notify') return
 		if (msg.key.id.startsWith('BAE5')) return
 		if (msg.key.id.length === 22) return
 		if (!msg.message) return
-		const m = await Serialize(XliconBotInc, msg, store)
-		require('../ES_TEAMS-V1')(XliconBotInc, m, message, store);
+		const m = await Serialize(Esteams, msg, store)
+		require('../ES_TEAMS-V1')(Esteams, m, message, store);
 		if (type === 'interactiveResponseMessage' && m.quoted && m.quoted.fromMe) {
 			let apb = await generateWAMessage(m.chat, { text: JSON.parse(m.msg.nativeFlowResponseMessage.paramsJson).id, mentions: m.mentionedJid }, {
-				userJid: XliconBotInc.user.id,
+				userJid: Esteams.user.id,
 				quoted: m.quoted
 			});
 			apb.key = msg.key
-			apb.key.fromMe = areJidsSameUser(m.sender, XliconBotInc.user.id);
+			apb.key.fromMe = areJidsSameUser(m.sender, Esteams.user.id);
 			if (m.isGroup) apb.participant = m.sender;
 			let pbr = {
 				...msg,
 				messages: [proto.WebMessageInfo.fromObject(apb)],
 				type: 'append'
 			}
-			XliconBotInc.ev.emit('messages.upsert', pbr);
+			Esteams.ev.emit('messages.upsert', pbr);
 		}
 		let antiswview = global.db.settings[botNumber].antiswview
 		if (antiswview) {
 			if (msg.key.remoteJid === 'status@broadcast') {
-				await XliconBotInc.readMessages([msg.key]);
-				if (/protocolMessage/i.test(type)) XliconBotInc.sendFromOwner(ownernumber, 'Status from @' + msg.key.participant.split('@')[0] + ' Was removed', msg, { mentions: [msg.key.participant] });
+				await Esteams.readMessages([msg.key]);
+				if (/protocolMessage/i.test(type)) Esteams.sendFromOwner(ownernumber, 'Status from @' + msg.key.participant.split('@')[0] + ' Was removed', msg, { mentions: [msg.key.participant] });
 				if (/(audioMessage|imageMessage|videoMessage|extendedTextMessage)/i.test(type)) {
 					let keke = (type == 'extendedTextMessage') ? `Story Caption : ${msg.message.extendedTextMessage.text ? msg.message.extendedTextMessage.text : ''}` : (type == 'imageMessage') ? `Image Story ${msg.message.imageMessage.caption ? 'with caption : ' + msg.message.imageMessage.caption : ''}` : (type == 'videoMessage') ? `Video Story ${msg.message.videoMessage.caption ? 'with caption : ' + msg.message.videoMessage.caption : ''}` : (type == 'audioMessage') ? 'Audio Story' : `\nIt's not known, just check directly`
-					await XliconBotInc.sendFromOwner(ownernumber, `Story from @${msg.key.participant.split('@')[0]}\n${keke}`, msg, { mentions: [msg.key.participant] });
+					await Esteams.sendFromOwner(ownernumber, `Story from @${msg.key.participant.split('@')[0]}\n${keke}`, msg, { mentions: [msg.key.participant] });
 				}
 			}
 		}
@@ -353,12 +353,12 @@ async function MessagesUpsert(XliconBotInc, message, store) {
 	}
 }
 
-async function Solving(XliconBotInc, store) {
-	XliconBotInc.public = true
+async function Solving(Esteams, store) {
+	Esteams.public = true
 	
-	XliconBotInc.serializeM = (m) => MessagesUpsert(XliconBotInc, m, store)
+	Esteams.serializeM = (m) => MessagesUpsert(Esteams, m, store)
 	
-	XliconBotInc.decodeJid = (jid) => {
+	Esteams.decodeJid = (jid) => {
 		if (!jid) return jid
 		if (/:\d+@/gi.test(jid)) {
 			let decode = jidDecode(jid) || {}
@@ -366,10 +366,10 @@ async function Solving(XliconBotInc, store) {
 		} else return jid
 	}
 	
-	XliconBotInc.getName = (jid, withoutContact  = false) => {
-		const id = XliconBotInc.decodeJid(jid);
+	Esteams.getName = (jid, withoutContact  = false) => {
+		const id = Esteams.decodeJid(jid);
 		if (id.endsWith('@g.us')) {
-			const groupInfo = store.contacts[id] || XliconBotInc.groupMetadata(id) || {};
+			const groupInfo = store.contacts[id] || Esteams.groupMetadata(id) || {};
 			return Promise.resolve(groupInfo.name || groupInfo.subject || PhoneNumber('+' + id.replace('@g.us', '')).getNumber('international'));
 		} else {
 			if (id === '0@s.whatsapp.net') {
@@ -380,7 +380,7 @@ async function Solving(XliconBotInc, store) {
 		}
 	}
 	
-	XliconBotInc.copyNForward = async (jid, message, forceForward = false, options = {}) => {
+	Esteams.copyNForward = async (jid, message, forceForward = false, options = {}) => {
 let vtype
 if (options.readViewOnce) {
 message.message = message.message && message.message.ephemeralMessage && message.message.ephemeralMessage.message ? message.message.ephemeralMessage.message : (message.message || undefined)
@@ -410,23 +410,23 @@ contextInfo: {
 }
 } : {})
 } : {})
-await XliconBotInc.relayMessage(jid, waMessage.message, { messageId:  waMessage.key.id })
+await Esteams.relayMessage(jid, waMessage.message, { messageId:  waMessage.key.id })
 return waMessage
 }
 	
-	XliconBotInc.sendContact = async (jid, kon, quoted = '', opts = {}) => {
+	Esteams.sendContact = async (jid, kon, quoted = '', opts = {}) => {
 	let list = []
 	for (let i of kon) {
 	    list.push({
-	    	displayName: await XliconBotInc.getName(i),
-	    	vcard: `BEGIN:VCARD\nVERSION:3.0\nN:${await XliconBotInc.getName(i)}\nFN:${await XliconBotInc.getName(i)}\nitem1.TEL;waid=${i.split('@')[0]}:${i.split('@')[0]}\nitem1.X-ABLabel:Mobile\nEND:VCARD`
+	    	displayName: await Esteams.getName(i),
+	    	vcard: `BEGIN:VCARD\nVERSION:3.0\nN:${await Esteams.getName(i)}\nFN:${await Esteams.getName(i)}\nitem1.TEL;waid=${i.split('@')[0]}:${i.split('@')[0]}\nitem1.X-ABLabel:Mobile\nEND:VCARD`
 	    })
 	}
-	XliconBotInc.sendMessage(jid, { contacts: { displayName: `${list.length} Contact`, contacts: list }, ...opts }, { quoted })
+	Esteams.sendMessage(jid, { contacts: { displayName: `${list.length} Contact`, contacts: list }, ...opts }, { quoted })
     }
 	
-	XliconBotInc.setStatus = (status) => {
-		XliconBotInc.query({
+	Esteams.setStatus = (status) => {
+		Esteams.query({
 			tag: 'iq',
 			attrs: {
 				to: '@s.whatsapp.net',
@@ -442,11 +442,11 @@ return waMessage
 		return status
 	}
 	
-	XliconBotInc.sendPoll = (jid, name = '', values = [], selectableCount = 1) => {
-		return XliconBotInc.sendMessage(jid, { poll: { name, values, selectableCount }})
+	Esteams.sendPoll = (jid, name = '', values = [], selectableCount = 1) => {
+		return Esteams.sendMessage(jid, { poll: { name, values, selectableCount }})
 	}
 	
-	XliconBotInc.sendText = (jid, text, quoted = '', options) => XliconBotInc.sendMessage(jid, {
+	Esteams.sendText = (jid, text, quoted = '', options) => Esteams.sendMessage(jid, {
         text: text,
         ...options
     }, {
@@ -454,17 +454,17 @@ return waMessage
         ...options
     })
 	
-	XliconBotInc.sendAudio = async (jid, path, quoted = '', ptt = false, options) => {
+	Esteams.sendAudio = async (jid, path, quoted = '', ptt = false, options) => {
         let buffer = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,`[1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.existsSync(path) ? fs.readFileSync(path) : Buffer.alloc(0)
-        return await XliconBotInc.sendMessage(jid, { audio: buffer, ptt: ptt, ...options }, { quoted })
+        return await Esteams.sendMessage(jid, { audio: buffer, ptt: ptt, ...options }, { quoted })
     }
     
-    XliconBotInc.sendVideo = async (jid, path, caption = '', quoted = '', gif = false, options) => {
+    Esteams.sendVideo = async (jid, path, caption = '', quoted = '', gif = false, options) => {
         let buffer = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,`[1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.existsSync(path) ? fs.readFileSync(path) : Buffer.alloc(0)
-        return await XliconBotInc.sendMessage(jid, { video: buffer, caption: caption, gifPlayback: gif, ...options }, { quoted })
+        return await Esteams.sendMessage(jid, { video: buffer, caption: caption, gifPlayback: gif, ...options }, { quoted })
     }
 
-XliconBotInc.sendVideoAsSticker = async (jid, path, quoted, options = {}) => {
+Esteams.sendVideoAsSticker = async (jid, path, quoted, options = {}) => {
 let buff = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,`[1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.existsSync(path) ? fs.readFileSync(path) : Buffer.alloc(0)
 let buffer
 if (options && (options.packname || options.author)) {
@@ -472,10 +472,10 @@ buffer = await writeExifVid(buff, options)
 } else {
 buffer = await videoToWebp(buff)
 }
-await XliconBotInc.sendMessage(jid, { sticker: { url: buffer }, ...options }, { quoted })
+await Esteams.sendMessage(jid, { sticker: { url: buffer }, ...options }, { quoted })
 return buffer
 }
-XliconBotInc.sendImageAsSticker = async (jid, path, quoted, options = {}) => {
+Esteams.sendImageAsSticker = async (jid, path, quoted, options = {}) => {
 let buff = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,`[1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.existsSync(path) ? fs.readFileSync(path) : Buffer.alloc(0)
 let buffer
 if (options && (options.packname || options.author)) {
@@ -483,15 +483,15 @@ buffer = await writeExifImg(buff, options)
 } else {
 buffer = await imageToWebp(buff)
 }
-await XliconBotInc.sendMessage(jid, { sticker: { url: buffer }, ...options }, { quoted })
+await Esteams.sendMessage(jid, { sticker: { url: buffer }, ...options }, { quoted })
 .then( response => {
 fs.unlinkSync(buffer)
 return response
 })
 }
-XliconBotInc.sendImage = async (jid, path, caption = '', quoted = '', options) => {
+Esteams.sendImage = async (jid, path, caption = '', quoted = '', options) => {
         let buffer = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,` [1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.existsSync(path) ? fs.readFileSync(path) : Buffer.alloc(0)
-        return await XliconBotInc.sendMessage(jid, {
+        return await Esteams.sendMessage(jid, {
             image: buffer,
             caption: caption,
             ...options
@@ -500,24 +500,24 @@ XliconBotInc.sendImage = async (jid, path, caption = '', quoted = '', options) =
         })
     }
 	
-	XliconBotInc.sendFileUrl = async (jid, url, caption, quoted, options = {}) => {
+	Esteams.sendFileUrl = async (jid, url, caption, quoted, options = {}) => {
 		const buffer = await axios.get(url, { responseType: 'arraybuffer' });
 		const mime = buffer.headers['content-type'] || (await FileType.fromBuffer(buffer.data)).mime
 		if (mime.includes('gif')) {
-			return XliconBotInc.sendMessage(jid, { video: buffer.data, caption: caption, gifPlayback: true, ...options }, { quoted });
+			return Esteams.sendMessage(jid, { video: buffer.data, caption: caption, gifPlayback: true, ...options }, { quoted });
 		} else if (mime === 'application/pdf') {
-			return XliconBotInc.sendMessage(jid, { document: buffer.data, mimetype: 'application/pdf', caption: caption, ...options }, { quoted });
+			return Esteams.sendMessage(jid, { document: buffer.data, mimetype: 'application/pdf', caption: caption, ...options }, { quoted });
 		} else if (mime.includes('image')) {
-			return XliconBotInc.sendMessage(jid, { image: buffer.data, caption: caption, ...options }, { quoted });
+			return Esteams.sendMessage(jid, { image: buffer.data, caption: caption, ...options }, { quoted });
 		} else if (mime.includes('video')) {
-			return XliconBotInc.sendMessage(jid, { video: buffer.data, caption: caption, mimetype: 'video/mp4', ...options }, { quoted });
+			return Esteams.sendMessage(jid, { video: buffer.data, caption: caption, mimetype: 'video/mp4', ...options }, { quoted });
 		} else if (mime.includes('audio')) {
-			return XliconBotInc.sendMessage(jid, { audio: buffer.data, mimetype: 'audio/mpeg', ...options }, { quoted });
+			return Esteams.sendMessage(jid, { audio: buffer.data, mimetype: 'audio/mpeg', ...options }, { quoted });
 		}
 	}
 	
-	XliconBotInc.sendFile = async (jid, path, filename = '', caption = '', quoted, ptt = false, options = {}) => {
-  let type = await XliconBotInc.getFile(path, true);
+	Esteams.sendFile = async (jid, path, filename = '', caption = '', quoted, ptt = false, options = {}) => {
+  let type = await Esteams.getFile(path, true);
   let { res, data: file, filename: pathFile } = type;
 
   if (res && res.status !== 200 || file.length <= 65536) {
@@ -564,20 +564,20 @@ XliconBotInc.sendImage = async (jid, path, caption = '', quoted = '', options) =
   let m;
 
   try {
-    m = await XliconBotInc.sendMessage(jid, message, { ...opt, ...options });
+    m = await Esteams.sendMessage(jid, message, { ...opt, ...options });
   } catch (e) {
     //console.error(e)
     m = null;
   } finally {
-    if (!m) m = await XliconBotInc.sendMessage(jid, { ...message, [mtype]: file }, { ...opt, ...options });
+    if (!m) m = await Esteams.sendMessage(jid, { ...message, [mtype]: file }, { ...opt, ...options });
     file = null;
     return m;
   }
 }
 
 	
-	XliconBotInc.sendFakeLink = async (jid, text, title, body, thumbnail, myweb, options = {}) => {
-		await XliconBotInc.sendMessage(jid, {
+	Esteams.sendFakeLink = async (jid, text, title, body, thumbnail, myweb, options = {}) => {
+		await Esteams.sendMessage(jid, {
 			text: text,
 			contextInfo: {
 				externalAdReply: {
@@ -594,19 +594,19 @@ XliconBotInc.sendImage = async (jid, path, caption = '', quoted = '', options) =
 		})
 	}
 	
-	XliconBotInc.sendFromOwner = async (jid, text, quoted, options = {}) => {
+	Esteams.sendFromOwner = async (jid, text, quoted, options = {}) => {
 		for (const a of jid) {
-			await XliconBotInc.sendMessage(a + '@s.whatsapp.net', { text, ...options }, { quoted });
+			await Esteams.sendMessage(a + '@s.whatsapp.net', { text, ...options }, { quoted });
 		}
 	}
 	
-	XliconBotInc.parseMention = (text = '') => {
+	Esteams.parseMention = (text = '') => {
 return [...text.matchAll(/@([0-9]{5,16}|0)/g)].map(v => v[1] + '@s.whatsapp.net')
 }
 	
-	XliconBotInc.sendTextMentions = async (jid, text, quoted, options = {}) => XliconBotInc.sendMessage(jid, { text: text, mentions: [...text.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net'), ...options }, { quoted })
+	Esteams.sendTextMentions = async (jid, text, quoted, options = {}) => Esteams.sendMessage(jid, { text: text, mentions: [...text.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net'), ...options }, { quoted })
 	
-	XliconBotInc.sendAsSticker = async (jid, path, quoted, type, options = {}) => {
+	Esteams.sendAsSticker = async (jid, path, quoted, type, options = {}) => {
 		let buff = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,`[1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.existsSync(path) ? fs.readFileSync(path) : Buffer.alloc(0);
 		if (options && (options.packname || options.author)) {
 			buff = await writeExif(buff, options);
@@ -617,11 +617,11 @@ return [...text.matchAll(/@([0-9]{5,16}|0)/g)].map(v => v[1] + '@s.whatsapp.net'
 				buff = await videoToWebp(buff);
 			}
 		}
-		await XliconBotInc.sendMessage(jid, { sticker: { url: buff }, ...options }, { quoted });
+		await Esteams.sendMessage(jid, { sticker: { url: buff }, ...options }, { quoted });
 		return buff;
 	}
 	
-	XliconBotInc.downloadAndSaveMediaMessage = async (message, filename, attachExtension = true) => {
+	Esteams.downloadAndSaveMediaMessage = async (message, filename, attachExtension = true) => {
 		const quoted = message.msg || message;
 		const mime = quoted.mimetype || '';
 		const messageType = (message.mtype || mime.split('/')[0]).replace(/Message/gi, '');
@@ -636,7 +636,7 @@ return [...text.matchAll(/@([0-9]{5,16}|0)/g)].map(v => v[1] + '@s.whatsapp.net'
 		return trueFileName;
 	}
 	
-	XliconBotInc.getFile = async (PATH, save) => {
+	Esteams.getFile = async (PATH, save) => {
 		let res
 		let data = Buffer.isBuffer(PATH) ? PATH : /^data:.*?\/.*?;base64,/i.test(PATH) ? Buffer.from(PATH.split`,`[1], 'base64') : /^https?:\/\//.test(PATH) ? await (res = await getBuffer(PATH)) : fs.existsSync(PATH) ? (filename = PATH, fs.readFileSync(PATH)) : typeof PATH === 'string' ? PATH : Buffer.alloc(0)
 		let type = await FileType.fromBuffer(data) || {
@@ -654,8 +654,8 @@ return [...text.matchAll(/@([0-9]{5,16}|0)/g)].map(v => v[1] + '@s.whatsapp.net'
 		}
 	}
 	
-	XliconBotInc.sendMedia = async (jid, path, fileName = '', caption = '', quoted = '', options = {}) => {
-		const { mime, data, filename } = await XliconBotInc.getFile(path, true);
+	Esteams.sendMedia = async (jid, path, fileName = '', caption = '', quoted = '', options = {}) => {
+		const { mime, data, filename } = await Esteams.getFile(path, true);
 		const isWebpSticker = options.asSticker || /webp/.test(mime);
 		let type = 'document', mimetype = mime, pathFile = filename;
 		if (isWebpSticker) {
@@ -672,17 +672,17 @@ return [...text.matchAll(/@([0-9]{5,16}|0)/g)].map(v => v[1] + '@s.whatsapp.net'
 		} else if (/image|video|audio/.test(mime)) {
 			type = mime.split('/')[0];
 		}
-		await XliconBotInc.sendMessage(jid, { [type]: { url: pathFile }, caption, mimetype, fileName, ...options }, { quoted, ...options });
+		await Esteams.sendMessage(jid, { [type]: { url: pathFile }, caption, mimetype, fileName, ...options }, { quoted, ...options });
 		return fs.promises.unlink(pathFile);
 	}
 	
-	 XliconBotInc.sendButtonImage = async (jid, buttons, quoted, opts = {}) => {
+	 Esteams.sendButtonImage = async (jid, buttons, quoted, opts = {}) => {
       var image = await prepareWAMessageMedia({
          image: {
             url: opts && opts.image ? opts.image : ''
          }
       }, {
-         upload: XliconBotInc.waUploadToServer
+         upload: Esteams.waUploadToServer
       })
       let message = generateWAMessageFromContent(jid, {
          viewOnceMessage: {
@@ -708,18 +708,18 @@ return [...text.matchAll(/@([0-9]{5,16}|0)/g)].map(v => v[1] + '@s.whatsapp.net'
       }, {
          quoted
       })
-      return XliconBotInc.relayMessage(jid, message["message"], {
+      return Esteams.relayMessage(jid, message["message"], {
          messageId: message.key.id
       })
    }
    
-   XliconBotInc.sendButtonVideo = async (jid, buttons, quoted, opts = {}) => {
+   Esteams.sendButtonVideo = async (jid, buttons, quoted, opts = {}) => {
       var video = await prepareWAMessageMedia({
          video: {
             url: opts && opts.video ? opts.video : ''
          }
       }, {
-         upload: XliconBotInc.waUploadToServer
+         upload: Esteams.waUploadToServer
       })
       let message = generateWAMessageFromContent(jid, {
          viewOnceMessage: {
@@ -745,12 +745,12 @@ return [...text.matchAll(/@([0-9]{5,16}|0)/g)].map(v => v[1] + '@s.whatsapp.net'
       }, {
          quoted
       })
-      return XliconBotInc.relayMessage(jid, message["message"], {
+      return Esteams.relayMessage(jid, message["message"], {
          messageId: message.key.id
       })
    }
    
-   XliconBotInc.sendList = async (jid, sections, quoted, opts = {}) => {
+   Esteams.sendList = async (jid, sections, quoted, opts = {}) => {
       let message = generateWAMessageFromContent(jid, {
          viewOnceMessage: {
             message: {
@@ -777,18 +777,18 @@ return [...text.matchAll(/@([0-9]{5,16}|0)/g)].map(v => v[1] + '@s.whatsapp.net'
       }, {
          quoted
       })
-      XliconBotInc.relayMessage(jid, message["message"], {
+      Esteams.relayMessage(jid, message["message"], {
          messageId: message.key.id
       })
    }
 	
-	XliconBotInc.sendListImage = async (jid, sections, quoted, opts = {}) => {
+	Esteams.sendListImage = async (jid, sections, quoted, opts = {}) => {
       var image = await prepareWAMessageMedia({
          image: {
             url: opts && opts.image ? opts.image : ''
          }
       }, {
-         upload: XliconBotInc.waUploadToServer
+         upload: Esteams.waUploadToServer
       })
       let message = generateWAMessageFromContent(jid, {
          viewOnceMessage: {
@@ -818,12 +818,12 @@ return [...text.matchAll(/@([0-9]{5,16}|0)/g)].map(v => v[1] + '@s.whatsapp.net'
       }, {
          quoted
       })
-      XliconBotInc.relayMessage(jid, message["message"], {
+      Esteams.relayMessage(jid, message["message"], {
          messageId: message.key.id
       })
    }
 	
-	XliconBotInc.sendButtonMsg = async (jid, body = '', footer = '', title = '', media, buttons = [], quoted, options = {}) => {
+	Esteams.sendButtonMsg = async (jid, body = '', footer = '', title = '', media, buttons = [], quoted, options = {}) => {
 		const msg = await generateWAMessageFromContent(jid, {
 			viewOnceMessage: {
 				message: {
@@ -840,7 +840,7 @@ return [...text.matchAll(/@([0-9]{5,16}|0)/g)].map(v => v[1] + '@s.whatsapp.net'
 							...(media ? await generateWAMessageContent({
 								[media.type]: media.url ? { url: media.url } : media.data
 							}, {
-								upload: XliconBotInc.waUploadToServer
+								upload: Esteams.waUploadToServer
 							}) : {})
 						}),
 						nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
@@ -873,12 +873,12 @@ return [...text.matchAll(/@([0-9]{5,16}|0)/g)].map(v => v[1] + '@s.whatsapp.net'
 				}
 			}
 		}, {});
-		await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, { messageId: msg.key.id });
+		await Esteams.relayMessage(msg.key.remoteJid, msg.message, { messageId: msg.key.id });
 	}
 	
-	XliconBotInc.sendCarouselMsg = async (jid, body = '', footer = '', cards = [], options = {}) => {
+	Esteams.sendCarouselMsg = async (jid, body = '', footer = '', cards = [], options = {}) => {
 		async function getImageMsg(url) {
-			const { imageMessage } = await generateWAMessageContent({ image: { url } }, { upload: XliconBotInc.waUploadToServer });
+			const { imageMessage } = await generateWAMessageContent({ image: { url } }, { upload: Esteams.waUploadToServer });
 			return imageMessage;
 		}
 		const cardPromises = cards.map(async (a) => {
@@ -918,14 +918,14 @@ return [...text.matchAll(/@([0-9]{5,16}|0)/g)].map(v => v[1] + '@s.whatsapp.net'
 				}
 			}
 		}, {});
-		await XliconBotInc.relayMessage(msg.key.remoteJid, msg.message, { messageId: msg.key.id });
+		await Esteams.relayMessage(msg.key.remoteJid, msg.message, { messageId: msg.key.id });
 	}
 
-	return XliconBotInc
+	return Esteams
 }
 
-async function Serialize(XliconBotInc, m, store) {
-	const botNumber = XliconBotInc.decodeJid(XliconBotInc.user.id)
+async function Serialize(Esteams, m, store) {
+	const botNumber = Esteams.decodeJid(Esteams.user.id)
 	if (!m) return m
 	if (m.key) {
 		m.id = m.key.id
@@ -933,7 +933,7 @@ async function Serialize(XliconBotInc, m, store) {
 		m.fromMe = m.key.fromMe
 		m.isBaileys = m.id.startsWith('BAE5')
 		m.isGroup = m.chat.endsWith('@g.us')
-		m.sender = XliconBotInc.decodeJid(m.fromMe && XliconBotInc.user.id || m.participant || m.key.participant || m.chat || '')
+		m.sender = Esteams.decodeJid(m.fromMe && Esteams.user.id || m.participant || m.key.participant || m.chat || '')
 	}
 	if (m.message) {
 		m.type = getContentType(m.message) || Object.keys(m.message)[0]
@@ -964,21 +964,21 @@ async function Serialize(XliconBotInc, m, store) {
 			m.quoted.device = getDevice(m.quoted.id)
 			m.quoted.chat = m.msg.contextInfo.remoteJid || m.chat
 			m.quoted.isBaileys = m.quoted.id ? m.quoted.id.startsWith('BAE5') : false
-			m.quoted.sender = XliconBotInc.decodeJid(m.msg.contextInfo.participant)
-			m.quoted.fromMe = m.quoted.sender === XliconBotInc.decodeJid(XliconBotInc.user.id)
+			m.quoted.sender = Esteams.decodeJid(m.msg.contextInfo.participant)
+			m.quoted.fromMe = m.quoted.sender === Esteams.decodeJid(Esteams.user.id)
 			m.quoted.text = m.quoted.caption || m.quoted.conversation || m.quoted.contentText || m.quoted.selectedDisplayText || m.quoted.title || ''
 			m.quoted.msg = extractMessageContent(m.quoted.message[m.quoted.type]) || m.quoted.message[m.quoted.type]
 			m.quoted.mentionedJid = m.msg.contextInfo ? m.msg.contextInfo.mentionedJid : []
 			m.quoted.body = m.quoted.msg?.text || m.quoted.msg?.caption || m.quoted?.message?.conversation || m.quoted.msg?.selectedButtonId || m.quoted.msg?.singleSelectReply?.selectedRowId || m.quoted.msg?.selectedId || m.quoted.msg?.contentText || m.quoted.msg?.selectedDisplayText || m.quoted.msg?.title || m.quoted?.msg?.name || ''
 			m.getQuotedObj = async () => {
 				if (!m.quoted.id) return false
-				let q = await store.loadMessage(m.chat, m.quoted.id, XliconBotInc)
-				return await Serialize(XliconBotInc, q, store)
+				let q = await store.loadMessage(m.chat, m.quoted.id, Esteams)
+				return await Serialize(Esteams, q, store)
 			}
 			m.quoted.key = {
 				remoteJid: m.msg?.contextInfo?.remoteJid || m.chat,
 				participant: m.quoted.sender,
-				fromMe: areJidsSameUser(XliconBotInc.decodeJid(m.msg?.contextInfo?.participant), XliconBotInc.decodeJid(XliconBotInc?.user?.id)),
+				fromMe: areJidsSameUser(Esteams.decodeJid(m.msg?.contextInfo?.participant), Esteams.decodeJid(Esteams?.user?.id)),
 				id: m.msg?.contextInfo?.stanzaId
 			}
 			m.quoted.isGroup = m.quoted.chat.endsWith('@g.us')
@@ -1017,7 +1017,7 @@ async function Serialize(XliconBotInc, m, store) {
 				return buffer
 			}
 			m.quoted.delete = () => {
-				XliconBotInc.sendMessage(m.quoted.chat, {
+				Esteams.sendMessage(m.quoted.chat, {
 					delete: {
 						remoteJid: m.quoted.chat,
 						fromMe: m.isBotAdmins ? false : true,
@@ -1041,7 +1041,7 @@ async function Serialize(XliconBotInc, m, store) {
 		return buffer
 	}
 	
-	m.copy = () => Serialize(XliconBotInc, proto.WebMessageInfo.fromObject(proto.WebMessageInfo.toObject(m)))
+	m.copy = () => Serialize(Esteams, proto.WebMessageInfo.fromObject(proto.WebMessageInfo.toObject(m)))
 	
 	m.reply = async (text, options = {}) => {
 		const chatId = options?.chat ? options.chat : m.chat
@@ -1052,15 +1052,15 @@ async function Serialize(XliconBotInc, m, store) {
 				const data = await axios.get(text, { responseType: 'arraybuffer' });
 				const mime = data.headers['content-type'] || (await FileType.fromBuffer(data.data)).mime
 				if (/gif|image|video|audio|pdf/i.test(mime)) {
-					return XliconBotInc.sendFileUrl(chatId, text, caption, quoted, options)
+					return Esteams.sendFileUrl(chatId, text, caption, quoted, options)
 				} else {
-					return XliconBotInc.sendMessage(chatId, { text: text, mentions: [...text.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net'), ...options }, { quoted })
+					return Esteams.sendMessage(chatId, { text: text, mentions: [...text.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net'), ...options }, { quoted })
 				}
 			} else {
-				return XliconBotInc.sendMessage(chatId, { text: text, mentions: [...text.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net'), ...options }, { quoted })
+				return Esteams.sendMessage(chatId, { text: text, mentions: [...text.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net'), ...options }, { quoted })
 			}
 		} catch (e) {
-			return XliconBotInc.sendMessage(chatId, { text: text, mentions: [...text.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net'), ...options }, { quoted })
+			return Esteams.sendMessage(chatId, { text: text, mentions: [...text.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net'), ...options }, { quoted })
 		}
 	}
 
