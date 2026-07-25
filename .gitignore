@@ -1,0 +1,7 @@
+node_modules/
+ES_TEAMS-SESSION/creds.json
+ES_TEAMS-SESSION/app-state-sync-*.json
+ES_TEAMS-SESSION/pre-key-*.json
+ES_TEAMS-SESSION/session-*.json
+ES_TEAMS-SESSION/sender-key*.json
+npm-debug.log*
