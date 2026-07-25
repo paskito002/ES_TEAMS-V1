@@ -75,7 +75,7 @@ async function startXliconBot() {
     const { state, saveCreds } = await useMultiFileAuthState(`./ES_TEAMS-SESSION`);
     const msgRetryCounterCache = new NodeCache();
     
-    const XliconBotInc = makeWASocket({
+    const Esteams = makeWASocket({
         logger: pino({ level: 'silent' }),
         printQRInTerminal: !pairingCode,
         browser: Browsers.windows('Firefox'),
@@ -95,23 +95,23 @@ async function startXliconBot() {
         defaultQueryTimeoutMs: undefined,
     });
    
-    store.bind(XliconBotInc.ev);
+    store.bind(Esteams.ev);
 
-    if (pairingCode && !XliconBotInc.authState.creds.registered) {
+    if (pairingCode && !Esteams.authState.creds.registered) {
         if (useMobile) throw new Error('Cannot use pairing code with mobile API');
 
         phoneNumber = process.env.PHONE_NUMBER || phoneNumber;
 
         setTimeout(async () => {
-            const code = await XliconBotInc.requestPairingCode(phoneNumber);
+            const code = await Esteams.requestPairingCode(phoneNumber);
             console.log(chalk.black(chalk.bgGreen(`🎁  Your Es Teams Pairing Code : ${code}`)));
         }, 3000);
     }
 
-    store.bind(XliconBotInc.ev);
-    await Solving(XliconBotInc, store);
-    XliconBotInc.ev.on('creds.update', saveCreds);
-    XliconBotInc.ev.on('connection.update', async (update) => {
+    store.bind(Esteams.ev);
+    await Solving(Esteams, store);
+    Esteams.ev.on('creds.update', saveCreds);
+    Esteams.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, receivedPendingNotifications } = update;
         if (connection === 'close') {
             const reason = new Boom(lastDisconnect?.error)?.output.statusCode;
@@ -132,56 +132,56 @@ async function startXliconBot() {
                 process.exit(1);
             } else if (reason === DisconnectReason.connectionReplaced) {
                 console.log('Close current Session first...');
-                XliconBotInc.logout();
+                Esteams.logout();
             } else if (reason === DisconnectReason.loggedOut) {
                 console.log('Scan again and Run...');
             } else if (reason === DisconnectReason.multideviceMismatch) {
                 console.log('Scan again...');
             } else {
-                XliconBotInc.end(`Unknown DisconnectReason : ${reason}|${connection}`);
+                Esteams.end(`Unknown DisconnectReason : ${reason}|${connection}`);
             }
         }
         if (connection == 'open') {
-            console.log('Connected to : ' + JSON.stringify(XliconBotInc.user, null, 2));
+            console.log('Connected to : ' + JSON.stringify(Esteams.user, null, 2));
         } else if (receivedPendingNotifications == 'true') {
             console.log('Please wait About 1 Minute...');
         }
     });
     
-    XliconBotInc.ev.on('contacts.update', (update) => {
+    Esteams.ev.on('contacts.update', (update) => {
         for (let contact of update) {
-            let id = XliconBotInc.decodeJid(contact.id);
+            let id = Esteams.decodeJid(contact.id);
             if (store && store.contacts) store.contacts[id] = { id, name: contact.notify };
         }
     });
     
-    XliconBotInc.ev.on('call', async (call) => {
-        let botNumber = await XliconBotInc.decodeJid(XliconBotInc.user.id);
+    Esteams.ev.on('call', async (call) => {
+        let botNumber = await Esteams.decodeJid(Esteams.user.id);
         let anticall = global.db.settings[botNumber].anticall;
         if (anticall) {
             for (let id of call) {
                 if (id.status === 'offer') {
-                    let msg = await XliconBotInc.sendMessage(id.from, { text: `Currently, We Cannot Receive Calls ${id.isVideo ? 'Video' : 'Voice'}.\nIf @${id.from.split('@')[0]} Needs Help, Please Contact Owner :)`, mentions: [id.from] });
-                    await XliconBotInc.sendContact(id.from, global.owner, msg);
-                    await XliconBotInc.rejectCall(id.id, id.from);
+                    let msg = await Esteams.sendMessage(id.from, { text: `Currently, We Cannot Receive Calls ${id.isVideo ? 'Video' : 'Voice'}.\nIf @${id.from.split('@')[0]} Needs Help, Please Contact Owner :)`, mentions: [id.from] });
+                    await Esteams.sendContact(id.from, global.owner, msg);
+                    await Esteams.rejectCall(id.id, id.from);
                 }
             }
         }
     });
     
-    XliconBotInc.ev.on('groups.update', async (update) => {
-        await GroupUpdate(XliconBotInc, update, store);
+    Esteams.ev.on('groups.update', async (update) => {
+        await GroupUpdate(Esteams, update, store);
     });
     
-    XliconBotInc.ev.on('group-participants.update', async (update) => {
-        await GroupParticipantsUpdate(XliconBotInc, update);
+    Esteams.ev.on('group-participants.update', async (update) => {
+        await GroupParticipantsUpdate(Esteams, update);
     });
     
-    XliconBotInc.ev.on('messages.upsert', async (message) => {
-        await MessagesUpsert(XliconBotInc, message, store);
+    Esteams.ev.on('messages.upsert', async (message) => {
+        await MessagesUpsert(Esteams, message, store);
     });
 
-    return XliconBotInc;
+    return Esteams;
 }
 
 startXliconBot();
