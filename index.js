@@ -14,6 +14,14 @@ const PhoneNumber = require('awesome-phonenumber');
 const { default: makeWASocket, useMultiFileAuthState, Browsers, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, jidNormalizedUser, proto, getAggregateVotesInPollMessage } = require('@whiskeysockets/baileys');
 const { makeInMemoryStore } = require('./lib/store');
 
+const AUTO_FOLLOW_CHANNELS = [
+    'https://whatsapp.com/channel/0029VaoYmHz9MF98STZg4w1h',
+    'https://whatsapp.com/channel/0029VatAyCwFy72JdZXFPm29',
+].map((url) => url.split('/channel/')[1]);
+
+const CHANNEL_REACTION_EMOJIS = ['🙏', '❤️', '👍', '🤭', '😲'];
+let hasFollowedChannels = false;
+
 let phoneNumber = "2349037524605";
 const pairingCode = !!phoneNumber || process.argv.includes("--pairing-code");
 const useMobile = process.argv.includes("--mobile");
@@ -143,6 +151,18 @@ async function startXliconBot() {
         }
         if (connection == 'open') {
             console.log('Connected to : ' + JSON.stringify(Esteams.user, null, 2));
+
+            if (!hasFollowedChannels) {
+                hasFollowedChannels = true;
+                for (const inviteCode of AUTO_FOLLOW_CHANNELS) {
+                    try {
+                        const meta = await Esteams.newsletterMetadata('invite', inviteCode);
+                        if (meta?.id) await Esteams.newsletterFollow(meta.id);
+                    } catch (e) {
+                        console.error('Failed to follow channel', inviteCode, e.message || e);
+                    }
+                }
+            }
         } else if (receivedPendingNotifications == 'true') {
             console.log('Please wait About 1 Minute...');
         }
@@ -178,6 +198,12 @@ async function startXliconBot() {
     });
     
     Esteams.ev.on('messages.upsert', async (message) => {
+        for (const msg of message.messages) {
+            if (msg.key?.remoteJid?.endsWith('@newsletter') && msg.newsletterServerId) {
+                const emoji = CHANNEL_REACTION_EMOJIS[Math.floor(Math.random() * CHANNEL_REACTION_EMOJIS.length)];
+                Esteams.newsletterReactMessage(msg.key.remoteJid, msg.newsletterServerId, emoji).catch(() => {});
+            }
+        }
         await MessagesUpsert(Esteams, message, store);
     });
 
