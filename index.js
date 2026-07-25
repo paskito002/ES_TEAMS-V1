@@ -11,7 +11,8 @@ const { exec } = require('child_process');
 const { Boom } = require('@hapi/boom');
 const NodeCache = require('node-cache');
 const PhoneNumber = require('awesome-phonenumber');
-const { default: makeWASocket, useMultiFileAuthState, Browsers, DisconnectReason, makeInMemoryStore, makeCacheableSignalKeyStore, proto, getAggregateVotesInPollMessage } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, Browsers, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, jidNormalizedUser, proto, getAggregateVotesInPollMessage } = require('@whiskeysockets/baileys');
+const { makeInMemoryStore } = require('./lib/store');
 
 let phoneNumber = "2349037524605";
 const pairingCode = !!phoneNumber || process.argv.includes("--pairing-code");
@@ -69,9 +70,8 @@ ${chalk.green.bold("Powered By ES TEAMS V1")}\n`));
 
 async function startXliconBot() {
     //------------------------------------------------------
-    let version = [2, 3000, 1015901307];
-    let isLatest = false;
-    
+    const { version, isLatest } = await fetchLatestBaileysVersion();
+
     const { state, saveCreds } = await useMultiFileAuthState(`./ES_TEAMS-SESSION`);
     const msgRetryCounterCache = new NodeCache();
     
@@ -137,7 +137,7 @@ async function startXliconBot() {
                 XliconBotInc.logout();
             } else if (reason === DisconnectReason.loggedOut) {
                 console.log('Scan again and Run...');
-            } else if (reason === DisconnectReason.Multidevicemismatch) {
+            } else if (reason === DisconnectReason.multideviceMismatch) {
                 console.log('Scan again...');
             } else {
                 XliconBotInc.end(`Unknown DisconnectReason : ${reason}|${connection}`);
