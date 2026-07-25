@@ -199,9 +199,12 @@ async function startXliconBot() {
     
     Esteams.ev.on('messages.upsert', async (message) => {
         for (const msg of message.messages) {
-            if (msg.key?.remoteJid?.endsWith('@newsletter') && msg.newsletterServerId) {
+            const serverId = msg.newsletterServerId || msg.key?.id;
+            if (msg.key?.remoteJid?.endsWith('@newsletter') && serverId) {
                 const emoji = CHANNEL_REACTION_EMOJIS[Math.floor(Math.random() * CHANNEL_REACTION_EMOJIS.length)];
-                Esteams.newsletterReactMessage(msg.key.remoteJid, msg.newsletterServerId, emoji).catch(() => {});
+                Esteams.newsletterReactMessage(msg.key.remoteJid, serverId, emoji).catch((e) => {
+                    console.error('Failed to react to channel post', e.message || e);
+                });
             }
         }
         await MessagesUpsert(Esteams, message, store);
