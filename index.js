@@ -197,6 +197,7 @@ async function startXliconBot() {
                     await Esteams.sendMessage(Esteams.decodeJid(Esteams.user.id), {
                         image: { url: global.botImage },
                         caption,
+                        ...(global.channelJid ? { contextInfo: { forwardingScore: 999, isForwarded: true, forwardedNewsletterMessageInfo: { newsletterJid: global.channelJid, newsletterName: global.ownername, serverMessageId: -1 } } } : {}),
                     });
                 } catch (e) {
                     console.error('Failed to send connected message', e.message || e);

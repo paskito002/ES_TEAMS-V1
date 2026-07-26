@@ -1,4 +1,3 @@
-const { proto, generateWAMessageFromContent, prepareWAMessageMedia } = require('@whiskeysockets/baileys');
 const { runtime } = require('./lib/function');
 const api = require('./lib/esteamsApi');
 
@@ -16,86 +15,39 @@ function linkLine(displayText, url) {
 	return `🔗 ${displayText}: ${url}`;
 }
 
-function channelButton() {
+// "Forwarded from channel" badge -- a chip WhatsApp renders on top of an ordinary
+// message, not a tappable button. Requires a real, followed channel JID or WhatsApp
+// hides it, so it's only attached once global.channelJid has resolved.
+function channelInfo() {
+	if (!global.channelJid) return {};
 	return {
-		name: 'cta_url',
-		buttonParamsJson: JSON.stringify({ display_text: 'WhatsApp Channel', url: global.wagc2, merchant_url: global.wagc2 }),
+		contextInfo: {
+			forwardingScore: 999,
+			isForwarded: true,
+			forwardedNewsletterMessageInfo: {
+				newsletterJid: global.channelJid,
+				newsletterName: global.ownername,
+				serverMessageId: -1,
+			},
+		},
 	};
 }
 
-// Plain image/video + caption, no interactive buttons. Kept as a fallback: it's the
-// version confirmed to actually arrive on a real device after the button-based version
-// (further down) repeatedly failed to render at all.
-async function sendPlainReply(Esteams, m, { image, video, body, extraButtons = [] }) {
+// Native-flow interactive buttons don't reliably render on this account (confirmed live:
+// message relays with no error but nothing shows on the phone), so every reply instead
+// carries its links as plain, auto-linkified WhatsApp URLs inside the caption itself,
+// plus the channel badge above for branding.
+async function sendBrandedReply(Esteams, m, { image, video, body, extraButtons = [] }) {
 	const links = [...extraButtons.map((b) => linkLine(b.displayText, b.url)), linkLine('WhatsApp Channel', global.wagc2)];
 	const caption = `${body}\n\n${links.join('\n')}`;
 
 	if (video) {
-		return Esteams.sendMessage(m.chat, { video: Buffer.isBuffer(video) ? video : { url: video }, caption }, { quoted: m });
+		return Esteams.sendMessage(m.chat, { video: Buffer.isBuffer(video) ? video : { url: video }, caption, ...channelInfo() }, { quoted: m });
 	}
 	if (image) {
-		return Esteams.sendMessage(m.chat, { image: Buffer.isBuffer(image) ? image : { url: image }, caption }, { quoted: m });
+		return Esteams.sendMessage(m.chat, { image: Buffer.isBuffer(image) ? image : { url: image }, caption, ...channelInfo() }, { quoted: m });
 	}
-	return Esteams.sendMessage(m.chat, { text: caption }, { quoted: m });
-}
-
-// Attempt at native-flow interactive buttons: viewOnceMessage + messageContextInfo +
-// interactiveMessage + nativeFlowMessage with messageVersion: 1 (missing from every
-// earlier attempt) + forwardedNewsletterMessageInfo using a real, followed channel JID.
-// Falls back to sendPlainReply if this throws, or if the whole thing is unsupported.
-async function sendButtonReply(Esteams, m, { image, video, body, extraButtons = [] }) {
-	const buttons = [...extraButtons.map((b) => ({ name: 'cta_url', buttonParamsJson: JSON.stringify({ display_text: b.displayText, url: b.url, merchant_url: b.url }) })), channelButton()];
-
-	const header = { hasMediaAttachment: true };
-	if (video) {
-		const media = await prepareWAMessageMedia({ video: Buffer.isBuffer(video) ? video : { url: video } }, { upload: Esteams.waUploadToServer });
-		header.videoMessage = media.videoMessage;
-	} else if (image) {
-		const media = await prepareWAMessageMedia({ image: Buffer.isBuffer(image) ? image : { url: image } }, { upload: Esteams.waUploadToServer });
-		header.imageMessage = media.imageMessage;
-	}
-
-	const msg = generateWAMessageFromContent(
-		m.chat,
-		{
-			viewOnceMessage: {
-				message: {
-					messageContextInfo: { deviceListMetadata: {}, deviceListMetadataVersion: 2 },
-					interactiveMessage: proto.Message.InteractiveMessage.create({
-						body: proto.Message.InteractiveMessage.Body.create({ text: body }),
-						footer: proto.Message.InteractiveMessage.Footer.create({ text: global.wm }),
-						header: proto.Message.InteractiveMessage.Header.create(header),
-						nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({ buttons, messageVersion: 1 }),
-						contextInfo: {
-							mentionedJid: [m.sender],
-							forwardingScore: 999,
-							isForwarded: true,
-							...(global.channelJid
-								? {
-										forwardedNewsletterMessageInfo: {
-											newsletterJid: global.channelJid,
-											newsletterName: global.ownername,
-											serverMessageId: 143,
-										},
-									}
-								: {}),
-						},
-					}),
-				},
-			},
-		},
-		{ quoted: m }
-	);
-	return Esteams.relayMessage(m.chat, msg.message, { messageId: msg.key.id });
-}
-
-async function sendBrandedReply(Esteams, m, opts) {
-	try {
-		await sendButtonReply(Esteams, m, opts);
-	} catch (e) {
-		console.error('Button message failed, falling back to plain reply:', e.message || e);
-		await sendPlainReply(Esteams, m, opts);
-	}
+	return Esteams.sendMessage(m.chat, { text: caption, ...channelInfo() }, { quoted: m });
 }
 
 const requireArg = (args, usage) => {

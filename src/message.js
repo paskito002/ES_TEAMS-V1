@@ -175,6 +175,7 @@ await Esteams.sendMessage(id, {
   image: XliconWlcm,
   caption: xliconbody,
   mentions: [n],
+  ...(global.channelJid ? { contextInfo: { forwardingScore: 999, isForwarded: true, forwardedNewsletterMessageInfo: { newsletterJid: global.channelJid, newsletterName: global.ownername, serverMessageId: -1 } } } : {}),
 })
 				} else if (action == 'remove') {
 				let xliconName = n
@@ -200,6 +201,7 @@ await Esteams.sendMessage(id, {
   image: XliconLft,
   caption: xliconbody,
   mentions: [n],
+  ...(global.channelJid ? { contextInfo: { forwardingScore: 999, isForwarded: true, forwardedNewsletterMessageInfo: { newsletterJid: global.channelJid, newsletterName: global.ownername, serverMessageId: -1 } } } : {}),
 })
 				} else if (action == 'promote') {
 const xlicontime = moment().tz('Asia/Kolkata').locale('en-IN').format('HH:mm:ss');
