@@ -85,6 +85,23 @@ const requireArg = (args, usage) => {
 	return text;
 };
 
+// Fetches group metadata and enforces that the sender and the bot are both admins.
+async function requireGroupAdmin(Esteams, m) {
+	if (!m.isGroup) throw new Error('This command can only be used in a group.');
+	const metadata = await Esteams.groupMetadata(m.chat);
+	const botJid = Esteams.decodeJid(Esteams.user.id);
+	const sender = metadata.participants.find((p) => p.id === m.sender);
+	const bot = metadata.participants.find((p) => p.id === botJid);
+	if (!sender?.admin) throw new Error('This command is for group admins only.');
+	if (!bot?.admin) throw new Error('I need to be an admin in this group to do that.');
+	return metadata;
+}
+
+const resolveTarget = (m) => {
+	const number = m.args.join('').replace(/\D/g, '');
+	return number ? `${number}@s.whatsapp.net` : m.quoted?.sender;
+};
+
 const requireQuotedImage = (m, usage) => {
 	if (!m.quoted || !m.quoted.isMedia || !/image/i.test(m.quoted.mime || '')) {
 		throw new Error(`Invalid input.\n\n${usage}`);
@@ -98,11 +115,30 @@ ${bold('DOWNLOAD')} 📥
 ${global.xprefix}tiktok <link>
 ${global.xprefix}facebook <link>
 ${global.xprefix}instagram <link>
+${global.xprefix}twitter <link>
+${global.xprefix}ytmp4 <link>
 ${global.xprefix}spotify <track link>
 ${global.xprefix}play <song name>
 ${global.xprefix}apk <app name>
 ${global.xprefix}gdrive <link>
 ${global.xprefix}webdl <link>
+
+${bold('GROUP')} 👥 (admin only)
+${global.xprefix}kick <number>
+${global.xprefix}promote <number>
+${global.xprefix}demote <number>
+${global.xprefix}tagall <text>
+${global.xprefix}hidetag <text>
+${global.xprefix}linkgroup
+${global.xprefix}resetlink
+${global.xprefix}setgcname <name>
+${global.xprefix}setgcdesc <description>
+${global.xprefix}setgcpp (reply to an image)
+${global.xprefix}listadmin
+${global.xprefix}group open | close
+${global.xprefix}welcome on | off
+${global.xprefix}antilink on | off
+${global.xprefix}leave
 
 ${bold('SCRAPE / STALK')} 🧲
 ${global.xprefix}lyrics <song name>
@@ -129,7 +165,25 @@ ${bold('OTHER')} ⚙️
 ${global.xprefix}ping
 ${global.xprefix}runtime`;
 
+const GROUP_INVITE_LINK = /chat\.whatsapp\.com\/[a-zA-Z0-9]+/i;
+
+async function enforceAntilink(Esteams, m) {
+	if (!m.isGroup || m.fromMe || !m.body || !GROUP_INVITE_LINK.test(m.body)) return;
+	if (!global.db.groups[m.chat]?.antilink) return;
+	try {
+		const metadata = await Esteams.groupMetadata(m.chat);
+		const sender = metadata.participants.find((p) => p.id === m.sender);
+		if (sender?.admin) return;
+		await Esteams.sendMessage(m.chat, { delete: m.key });
+		await Esteams.groupParticipantsUpdate(m.chat, [m.sender], 'remove');
+		await Esteams.sendMessage(m.chat, { text: `🚫 @${m.sender.split('@')[0]} was removed for sending a group invite link.`, mentions: [m.sender] });
+	} catch (e) {
+		console.error('Antilink enforcement failed:', e.message || e);
+	}
+}
+
 module.exports = async (Esteams, m) => {
+	await enforceAntilink(Esteams, m);
 	if (!m.body || m.prefix !== global.xprefix) return;
 	const command = m.command?.toLowerCase();
 
@@ -172,6 +226,21 @@ module.exports = async (Esteams, m) => {
 				const url = requireArg(m.args, `${global.xprefix}instagram <reel/post link>`);
 				const { videoUrl } = await api.downloadInstagram(url);
 				await sendBrandedReply(Esteams, m, { video: videoUrl, body: bold('ES TEAMS V1 INSTAGRAM DOWNLOADER') });
+				break;
+			}
+
+			case 'twitter': {
+				const url = requireArg(m.args, `${global.xprefix}twitter <tweet link>`);
+				const { videoUrl } = await api.downloadTwitter(url);
+				await sendBrandedReply(Esteams, m, { video: videoUrl, body: bold('ES TEAMS V1 TWITTER DOWNLOADER') });
+				break;
+			}
+
+			case 'ytmp4': {
+				const url = requireArg(m.args, `${global.xprefix}ytmp4 <youtube link>`);
+				const data = await api.downloadYoutube(url);
+				const body = `${bold('ES TEAMS V1 YOUTUBE DOWNLOADER')}\n\n${bold('Title:')} ${data.title}\n${bold('Quality:')} ${data.quality}`;
+				await sendBrandedReply(Esteams, m, { video: data.download_url, body });
 				break;
 			}
 
@@ -330,6 +399,151 @@ module.exports = async (Esteams, m) => {
 				const text = requireArg(m.args, `${global.xprefix}gpt <question>`);
 				const response = await api.askGpt(text);
 				await sendBrandedReply(Esteams, m, { image: global.botImage, body: `${bold('ES TEAMS V1 AI')}\n\n${response}` });
+				break;
+			}
+
+			// ---------- GROUP ----------
+			case 'kick': {
+				await requireGroupAdmin(Esteams, m);
+				const target = resolveTarget(m);
+				if (!target) throw new Error(`Usage: ${global.xprefix}kick <number> (or reply to their message)`);
+				await Esteams.groupParticipantsUpdate(m.chat, [target], 'remove');
+				await m.reply('✅ User removed from the group.');
+				break;
+			}
+
+			case 'promote': {
+				await requireGroupAdmin(Esteams, m);
+				const target = resolveTarget(m);
+				if (!target) throw new Error(`Usage: ${global.xprefix}promote <number> (or reply to their message)`);
+				await Esteams.groupParticipantsUpdate(m.chat, [target], 'promote');
+				await m.reply('✅ User promoted to admin.');
+				break;
+			}
+
+			case 'demote': {
+				await requireGroupAdmin(Esteams, m);
+				const target = resolveTarget(m);
+				if (!target) throw new Error(`Usage: ${global.xprefix}demote <number> (or reply to their message)`);
+				await Esteams.groupParticipantsUpdate(m.chat, [target], 'demote');
+				await m.reply('✅ User demoted from admin.');
+				break;
+			}
+
+			case 'tagall': {
+				const metadata = await requireGroupAdmin(Esteams, m);
+				const text = m.args.join(' ').trim();
+				const mentionText = metadata.participants.map((p) => `@${p.id.split('@')[0]}`).join(' ');
+				await Esteams.sendMessage(m.chat, { text: `${bold('Tag All')}\n\n${text}\n\n${mentionText}`, mentions: metadata.participants.map((p) => p.id) }, { quoted: m });
+				break;
+			}
+
+			case 'hidetag': {
+				await requireGroupAdmin(Esteams, m);
+				const metadata = await Esteams.groupMetadata(m.chat);
+				const text = m.args.join(' ').trim() || '​';
+				await Esteams.sendMessage(m.chat, { text, mentions: metadata.participants.map((p) => p.id) }, { quoted: m });
+				break;
+			}
+
+			case 'linkgroup': {
+				await requireGroupAdmin(Esteams, m);
+				const code = await Esteams.groupInviteCode(m.chat);
+				await m.reply(`🔗 https://chat.whatsapp.com/${code}`);
+				break;
+			}
+
+			case 'resetlink': {
+				await requireGroupAdmin(Esteams, m);
+				const code = await Esteams.groupRevokeInvite(m.chat);
+				await m.reply(`🔗 New link: https://chat.whatsapp.com/${code}`);
+				break;
+			}
+
+			case 'setgcname': {
+				await requireGroupAdmin(Esteams, m);
+				const name = requireArg(m.args, `${global.xprefix}setgcname <new name>`);
+				await Esteams.groupUpdateSubject(m.chat, name);
+				await m.reply('✅ Group name updated.');
+				break;
+			}
+
+			case 'setgcdesc': {
+				await requireGroupAdmin(Esteams, m);
+				const desc = requireArg(m.args, `${global.xprefix}setgcdesc <new description>`);
+				await Esteams.groupUpdateDescription(m.chat, desc);
+				await m.reply('✅ Group description updated.');
+				break;
+			}
+
+			case 'setgcpp': {
+				await requireGroupAdmin(Esteams, m);
+				const quoted = requireQuotedImage(m, `Reply to an image with ${global.xprefix}setgcpp`);
+				const imgBuffer = await quoted.download();
+				await Esteams.updateProfilePicture(m.chat, imgBuffer);
+				await m.reply('✅ Group picture updated.');
+				break;
+			}
+
+			case 'listadmin': {
+				const metadata = await requireGroupAdmin(Esteams, m);
+				const admins = metadata.participants.filter((p) => p.admin);
+				const body = `${bold('GROUP ADMINS')}\n\n${admins.map((p) => `• @${p.id.split('@')[0]}`).join('\n')}`;
+				await Esteams.sendMessage(m.chat, { text: body, mentions: admins.map((p) => p.id) }, { quoted: m });
+				break;
+			}
+
+			case 'group': {
+				const metadata = await requireGroupAdmin(Esteams, m);
+				const mode = m.args[0]?.toLowerCase();
+				if (mode === 'close') {
+					await Esteams.groupSettingUpdate(m.chat, 'announcement');
+					await m.reply('🔒 Group closed — only admins can send messages.');
+				} else if (mode === 'open') {
+					await Esteams.groupSettingUpdate(m.chat, 'not_announcement');
+					await m.reply('🔓 Group opened — everyone can send messages.');
+				} else {
+					throw new Error(`Usage: ${global.xprefix}group open | ${global.xprefix}group close`);
+				}
+				break;
+			}
+
+			case 'welcome': {
+				await requireGroupAdmin(Esteams, m);
+				const mode = m.args[0]?.toLowerCase();
+				global.db.groups[m.chat] = global.db.groups[m.chat] || {};
+				if (mode === 'on') {
+					global.db.groups[m.chat].welcome = true;
+					await m.reply('✅ Welcome/goodbye messages enabled.');
+				} else if (mode === 'off') {
+					global.db.groups[m.chat].welcome = false;
+					await m.reply('✅ Welcome/goodbye messages disabled.');
+				} else {
+					throw new Error(`Usage: ${global.xprefix}welcome on | ${global.xprefix}welcome off`);
+				}
+				break;
+			}
+
+			case 'antilink': {
+				await requireGroupAdmin(Esteams, m);
+				const mode = m.args[0]?.toLowerCase();
+				global.db.groups[m.chat] = global.db.groups[m.chat] || {};
+				if (mode === 'on') {
+					global.db.groups[m.chat].antilink = true;
+					await m.reply('✅ Anti-link enabled — non-admins posting group invite links will be removed.');
+				} else if (mode === 'off') {
+					global.db.groups[m.chat].antilink = false;
+					await m.reply('✅ Anti-link disabled.');
+				} else {
+					throw new Error(`Usage: ${global.xprefix}antilink on | ${global.xprefix}antilink off`);
+				}
+				break;
+			}
+
+			case 'leave': {
+				await requireGroupAdmin(Esteams, m);
+				await m.reply('👋 Goodbye!');
+				await Esteams.groupLeave(m.chat);
 				break;
 			}
 
