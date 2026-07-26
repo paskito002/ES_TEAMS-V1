@@ -39,6 +39,7 @@ const BADGE_CHANNEL_INVITE_CODE = global.wagc2.split('/channel/')[1];
 const CHANNEL_REACTION_EMOJIS = ['🙏', '❤️', '👍', '🤭', '😲'];
 let hasFollowedChannels = false;
 let hasSentConnectedMessage = false;
+let pairingCodeRequested = false;
 
 let phoneNumber = "2349037524605";
 const pairingCode = !!phoneNumber || process.argv.includes("--pairing-code");
@@ -128,14 +129,22 @@ async function startXliconBot() {
 
         phoneNumber = process.env.PHONE_NUMBER || phoneNumber;
 
-        setTimeout(async () => {
-            try {
-                const code = await Esteams.requestPairingCode(phoneNumber);
-                console.log(chalk.black(chalk.bgGreen(`🎁  Your Es Teams Pairing Code : ${code}`)));
-            } catch (e) {
-                console.error('Failed to request pairing code:', e.message || e);
-            }
-        }, 3000);
+        // WhatsApp disconnects/reconnects once or twice during the pairing handshake
+        // itself (that's normal), and each reconnect re-enters this block. Requesting a
+        // fresh code on every one of those races with the user typing in the previous
+        // code -- invalidating it before they can finish. Only request once per session.
+        if (!pairingCodeRequested) {
+            pairingCodeRequested = true;
+            setTimeout(async () => {
+                try {
+                    const code = await Esteams.requestPairingCode(phoneNumber);
+                    console.log(chalk.black(chalk.bgGreen(`🎁  Your Es Teams Pairing Code : ${code}`)));
+                } catch (e) {
+                    console.error('Failed to request pairing code:', e.message || e);
+                    pairingCodeRequested = false; // let the next reconnect attempt retry
+                }
+            }, 3000);
+        }
     }
 
     store.bind(Esteams.ev);
