@@ -1,3 +1,4 @@
+const { proto, generateWAMessageFromContent, prepareWAMessageMedia } = require('@whiskeysockets/baileys');
 const { runtime } = require('./lib/function');
 const api = require('./lib/esteamsApi');
 
@@ -29,19 +30,53 @@ function linkButton(displayText, url) {
 	};
 }
 
-// Sends an image/video (URL or Buffer) as an interactive message with buttons, always
-// including the WhatsApp channel button. Uses the existing sendButtonMsg helper, which
-// (unlike sendButtonImage/sendButtonVideo) includes the messageContextInfo block WhatsApp
-// requires to actually render native-flow buttons on regular (non-business) accounts.
+// Sends an image/video (URL or Buffer) as an interactive message with a WhatsApp channel
+// button, following the exact proven-working pattern from the original ES_TEAMS-V1 bot
+// (messageContextInfo + forwardedNewsletterMessageInfo are both required for WhatsApp to
+// actually render native-flow buttons on regular, non-business accounts).
 async function sendBrandedReply(Esteams, m, { image, video, body, extraButtons = [] }) {
-	let media;
+	const buttons = [...extraButtons, channelButton()].map((b) => ({
+		name: b.name,
+		buttonParamsJson: typeof b.buttonParamsJson === 'string' ? b.buttonParamsJson : JSON.stringify(b.buttonParamsJson),
+	}));
+
+	const header = { hasMediaAttachment: true };
 	if (video) {
-		media = { type: 'video', url: video };
+		const media = await prepareWAMessageMedia({ video: Buffer.isBuffer(video) ? video : { url: video } }, { upload: Esteams.waUploadToServer });
+		header.videoMessage = media.videoMessage;
 	} else if (image) {
-		media = Buffer.isBuffer(image) ? { type: 'image', data: image } : { type: 'image', url: image };
+		const media = await prepareWAMessageMedia({ image: Buffer.isBuffer(image) ? image : { url: image } }, { upload: Esteams.waUploadToServer });
+		header.imageMessage = media.imageMessage;
 	}
-	const buttons = [...extraButtons, channelButton()];
-	return Esteams.sendButtonMsg(m.chat, body, global.wm, '', media, buttons, m);
+
+	const msg = generateWAMessageFromContent(
+		m.chat,
+		{
+			viewOnceMessage: {
+				message: {
+					messageContextInfo: { deviceListMetadata: {}, deviceListMetadataVersion: 2 },
+					interactiveMessage: proto.Message.InteractiveMessage.create({
+						body: proto.Message.InteractiveMessage.Body.create({ text: body }),
+						footer: proto.Message.InteractiveMessage.Footer.create({ text: global.wm }),
+						header: proto.Message.InteractiveMessage.Header.create(header),
+						nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({ buttons }),
+						contextInfo: {
+							mentionedJid: [m.sender],
+							forwardingScore: 999,
+							isForwarded: true,
+							forwardedNewsletterMessageInfo: {
+								newsletterJid: '120363313305181359@newsletter',
+								newsletterName: global.ownername,
+								serverMessageId: 143,
+							},
+						},
+					}),
+				},
+			},
+		},
+		{ quoted: m }
+	);
+	return Esteams.relayMessage(m.chat, msg.message, { messageId: msg.key.id });
 }
 
 const requireArg = (args, usage) => {
