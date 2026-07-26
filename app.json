@@ -1,0 +1,14 @@
+{
+	"name": "ES_TEAMS-V1",
+	"description": "WhatsApp Bot Using Lib Baileys",
+	"repository": "https://github.com/paskito002/ES_TEAMS-V1",
+	"logo": "https://node-js-sample.herokuapp.com/node.png",
+	"keywords": ["multi-device"],
+	"env": {
+		"PHONE_NUMBER": {
+			"description": "Your own WhatsApp number for pairing-code login, digits only with country code, no + or spaces (e.g. 2349037524605). Leave empty to log in by scanning a QR code instead.",
+			"required": false
+		}
+	}
+}
+                  
