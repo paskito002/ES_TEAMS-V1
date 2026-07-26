@@ -181,11 +181,13 @@ async function startXliconBot() {
                         const meta = await Esteams.newsletterMetadata('invite', inviteCode);
                         if (meta?.id) {
                             await Esteams.newsletterFollow(meta.id);
-                            // Cache the real, followed JID for the badge's channel specifically --
-                            // WhatsApp hides the badge if it points at a channel the account
-                            // doesn't actually follow, and it must always be global.wagc2.
+                            // Cache the real, followed JID and real registered name for the badge's
+                            // channel specifically -- WhatsApp falls back to showing the raw JID as
+                            // plain unlinked text if forwardedNewsletterMessageInfo's newsletterName
+                            // doesn't match what it actually has on file for that channel.
                             if (inviteCode === BADGE_CHANNEL_INVITE_CODE) {
                                 global.channelJid = meta.id;
+                                global.channelName = meta.name || meta.thread_metadata?.name?.text || global.ownername;
                             }
                         }
                     } catch (e) {
@@ -202,7 +204,7 @@ async function startXliconBot() {
                     await Esteams.sendMessage(Esteams.decodeJid(Esteams.user.id), {
                         image: { url: global.botImage },
                         caption,
-                        ...(global.channelJid ? { contextInfo: { forwardingScore: 999, isForwarded: true, forwardedNewsletterMessageInfo: { newsletterJid: global.channelJid, newsletterName: global.ownername, serverMessageId: -1 } } } : {}),
+                        ...(global.channelJid ? { contextInfo: { forwardingScore: 999, isForwarded: true, forwardedNewsletterMessageInfo: { newsletterJid: global.channelJid, newsletterName: global.channelName || global.ownername, serverMessageId: -1 } } } : {}),
                     });
                 } catch (e) {
                     console.error('Failed to send connected message', e.message || e);
