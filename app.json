@@ -3,6 +3,16 @@
 	"description": "WhatsApp Bot Using Lib Baileys",
 	"repository": "https://github.com/paskito002/ES_TEAMS-V1",
 	"logo": "https://node-js-sample.herokuapp.com/node.png",
-	"keywords": ["multi-device"]
+	"keywords": ["multi-device"],
+	"env": {
+		"PHONE_NUMBER": {
+			"description": "Your own WhatsApp number for pairing-code login, digits only with country code, no + or spaces (e.g. 2349037524605). Leave empty to log in by scanning a QR code instead.",
+			"required": false
+		},
+		"MONGODB_URI": {
+			"description": "Optional MongoDB connection string to persist the WhatsApp session across redeploys on hosts with no persistent disk.",
+			"required": false
+		}
+	}
 }
                   

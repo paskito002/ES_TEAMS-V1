@@ -46,7 +46,10 @@ const CHANNEL_REACTION_EMOJIS = ['🙏', '❤️', '👍', '🤭', '😲'];
 let hasFollowedChannels = false;
 let hasSentConnectedMessage = false;
 
-let phoneNumber = "2349037524605";
+// PHONE_NUMBER must be set to *your own* WhatsApp number (digits only, with country
+// code, e.g. 2349037524605) for pairing-code login to work -- the code WhatsApp issues
+// is only valid for the number it was requested for. Without it, we fall back to QR login.
+let phoneNumber = (process.env.PHONE_NUMBER || "").replace(/[^0-9]/g, '');
 const pairingCode = !!phoneNumber || process.argv.includes("--pairing-code");
 const useMobile = process.argv.includes("--mobile");
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -104,15 +107,24 @@ async function startXliconBot() {
     //------------------------------------------------------
     const { version, isLatest } = await fetchLatestBaileysVersion();
 
-    const sessionId = process.env.PHONE_NUMBER || phoneNumber;
+    const sessionId = phoneNumber || 'default';
     const { state, saveCreds } = MONGO_AUTH_URI
         ? await useMongoAuthState(MONGO_AUTH_URI, sessionId)
         : await useMultiFileAuthState(`./ES_TEAMS-SESSION`);
     const msgRetryCounterCache = new NodeCache();
-    
+
+    // A pairing code is only ever valid for the exact number it was requested for, so
+    // only attempt it when PHONE_NUMBER actually resolves to a valid number -- otherwise
+    // fall back to the QR code, which always works regardless of config.
+    const phoneNumberValid = !!phoneNumber && PhoneNumber('+' + phoneNumber).isValid();
+    const usePairingCode = pairingCode && phoneNumberValid;
+    if (pairingCode && !phoneNumberValid) {
+        console.error(chalk.red(`Invalid or missing PHONE_NUMBER ("${phoneNumber}"). Set the PHONE_NUMBER environment variable to YOUR WhatsApp number, digits only, with country code, no + or spaces (e.g. 2349037524605), then redeploy. Falling back to QR code login.`));
+    }
+
     const Esteams = makeWASocket({
         logger: pino({ level: 'silent' }),
-        printQRInTerminal: !pairingCode,
+        printQRInTerminal: !usePairingCode,
         browser: Browsers.windows('Firefox'),
         auth: {
             creds: state.creds,
@@ -132,19 +144,14 @@ async function startXliconBot() {
    
     store.bind(Esteams.ev);
 
-    if (pairingCode && !Esteams.authState.creds.registered) {
+    if (usePairingCode && !Esteams.authState.creds.registered) {
         if (useMobile) throw new Error('Cannot use pairing code with mobile API');
-
-        phoneNumber = (process.env.PHONE_NUMBER || phoneNumber).replace(/[^0-9]/g, '');
-
-        if (!PhoneNumber('+' + phoneNumber).isValid()) {
-            console.error(`Invalid phone number "${phoneNumber}" -- pairing code will not link. Set PHONE_NUMBER to digits only, with country code, no + or spaces (e.g. 2349037524605).`);
-        }
 
         setTimeout(async () => {
             try {
                 const code = await Esteams.requestPairingCode(phoneNumber);
                 console.log(chalk.black(chalk.bgGreen(`🎁  Your Es Teams Pairing Code : ${code}`)));
+                console.log(chalk.yellow(`Open WhatsApp on the phone for +${phoneNumber} -> Settings -> Linked Devices -> Link a device -> Link with phone number instead, then enter this code.`));
             } catch (e) {
                 console.error('Failed to request pairing code:', e.message || e);
             }
