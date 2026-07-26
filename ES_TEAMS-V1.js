@@ -38,8 +38,8 @@ function channelInfo() {
 // carries its links as plain, auto-linkified WhatsApp URLs inside the caption itself,
 // plus the channel badge above for branding.
 async function sendBrandedReply(Esteams, m, { image, video, body, extraButtons = [] }) {
-	const links = [...extraButtons.map((b) => linkLine(b.displayText, b.url)), linkLine('WhatsApp Channel', global.wagc2)];
-	const caption = `${body}\n\n${links.join('\n')}`;
+	const links = extraButtons.map((b) => linkLine(b.displayText, b.url));
+	const caption = links.length ? `${body}\n\n${links.join('\n')}` : body;
 
 	if (video) {
 		return Esteams.sendMessage(m.chat, { video: Buffer.isBuffer(video) ? video : { url: video }, caption, ...channelInfo() }, { quoted: m });
