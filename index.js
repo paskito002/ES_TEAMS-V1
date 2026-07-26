@@ -15,12 +15,16 @@ const PhoneNumber = require('awesome-phonenumber');
 const { default: makeWASocket, useMultiFileAuthState, Browsers, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, jidNormalizedUser, proto, getAggregateVotesInPollMessage } = require('@whiskeysockets/baileys');
 const { makeInMemoryStore } = require('./lib/store');
 
-const PORT = process.env.PORT || 3000;
-http.createServer((req, res) => {
+const PORT = process.env.PORT || 0; // 0 = OS picks a free port when PORT isn't explicitly set (e.g. multiple bots spawned in one host)
+const statusServer = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('ES TEAMS V1 IS ACTIVE\n');
-}).listen(PORT, '0.0.0.0', () => {
-    console.log(`Server listening on port ${PORT}`);
+});
+statusServer.on('error', (err) => {
+    console.error('HTTP server failed to bind, continuing without it:', err.message);
+});
+statusServer.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server listening on port ${statusServer.address().port}`);
 });
 
 const AUTO_FOLLOW_CHANNELS = [
