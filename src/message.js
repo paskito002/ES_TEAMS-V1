@@ -44,7 +44,6 @@ const chalk = require('chalk');
 const FileType = require('file-type');
 const moment = require('moment-timezone');
 const PhoneNumber = require('awesome-phonenumber');
-const prem = require('./premium');
 const { writeExif, imageToWebp, videoToWebp, writeExifImg, writeExifVid } = require('../lib/exif');
 const premium = JSON.parse(fs.readFileSync('./database/premium.json'));
 const { isUrl, getGroupAdmins, generateMessageTag, getBuffer, getSizeMedia, fetchJson, sleep, getTypeUrlMedia } = require('../lib/function');

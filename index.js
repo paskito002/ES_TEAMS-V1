@@ -201,7 +201,7 @@ async function startXliconBot() {
                             }),
                         },
                     ];
-                    await Esteams.sendButtonImage(Esteams.user.id, buttons, null, {
+                    await Esteams.sendButtonImage(Esteams.decodeJid(Esteams.user.id), buttons, null, {
                         image: global.botImage,
                         body,
                         footer: global.wm,
