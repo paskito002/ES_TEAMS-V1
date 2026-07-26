@@ -15,20 +15,39 @@ function linkLine(displayText, url) {
 	return `🔗 ${displayText}: ${url}`;
 }
 
+// "Forwarded from channel" badge -- a chip WhatsApp renders on top of an ordinary
+// message, not a tappable button. Requires a real, followed channel JID or WhatsApp
+// hides it, so it's only attached once global.channelJid has resolved.
+function channelInfo() {
+	if (!global.channelJid) return {};
+	return {
+		contextInfo: {
+			forwardingScore: 999,
+			isForwarded: true,
+			forwardedNewsletterMessageInfo: {
+				newsletterJid: global.channelJid,
+				newsletterName: global.ownername,
+				serverMessageId: -1,
+			},
+		},
+	};
+}
+
 // Native-flow interactive buttons don't reliably render on this account (confirmed live:
 // message relays with no error but nothing shows on the phone), so every reply instead
-// carries its links as plain, auto-linkified WhatsApp URLs inside the caption itself.
+// carries its links as plain, auto-linkified WhatsApp URLs inside the caption itself,
+// plus the channel badge above for branding.
 async function sendBrandedReply(Esteams, m, { image, video, body, extraButtons = [] }) {
 	const links = [...extraButtons.map((b) => linkLine(b.displayText, b.url)), linkLine('WhatsApp Channel', global.wagc2)];
 	const caption = `${body}\n\n${links.join('\n')}`;
 
 	if (video) {
-		return Esteams.sendMessage(m.chat, { video: Buffer.isBuffer(video) ? video : { url: video }, caption }, { quoted: m });
+		return Esteams.sendMessage(m.chat, { video: Buffer.isBuffer(video) ? video : { url: video }, caption, ...channelInfo() }, { quoted: m });
 	}
 	if (image) {
-		return Esteams.sendMessage(m.chat, { image: Buffer.isBuffer(image) ? image : { url: image }, caption }, { quoted: m });
+		return Esteams.sendMessage(m.chat, { image: Buffer.isBuffer(image) ? image : { url: image }, caption, ...channelInfo() }, { quoted: m });
 	}
-	return Esteams.sendMessage(m.chat, { text: caption }, { quoted: m });
+	return Esteams.sendMessage(m.chat, { text: caption, ...channelInfo() }, { quoted: m });
 }
 
 const requireArg = (args, usage) => {
