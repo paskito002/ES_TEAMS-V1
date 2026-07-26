@@ -1,4 +1,3 @@
-const { prepareWAMessageMedia, generateWAMessageFromContent } = require('@whiskeysockets/baileys');
 const { runtime } = require('./lib/function');
 const api = require('./lib/esteamsApi');
 
@@ -30,41 +29,19 @@ function linkButton(displayText, url) {
 	};
 }
 
-// Sends an image (URL or Buffer) or text-only card as an interactive message with buttons.
-async function sendBrandedReply(Esteams, m, { image, body, extraButtons = [] }) {
-	const header = {};
-	if (image) {
-		const media = await prepareWAMessageMedia(
-			{ image: Buffer.isBuffer(image) ? image : { url: image } },
-			{ upload: Esteams.waUploadToServer }
-		);
-		header.hasMediaAttachment = true;
-		header.imageMessage = media.imageMessage;
+// Sends an image/video (URL or Buffer) as an interactive message with buttons, always
+// including the WhatsApp channel button. Uses the existing sendButtonMsg helper, which
+// (unlike sendButtonImage/sendButtonVideo) includes the messageContextInfo block WhatsApp
+// requires to actually render native-flow buttons on regular (non-business) accounts.
+async function sendBrandedReply(Esteams, m, { image, video, body, extraButtons = [] }) {
+	let media;
+	if (video) {
+		media = { type: 'video', url: video };
+	} else if (image) {
+		media = Buffer.isBuffer(image) ? { type: 'image', data: image } : { type: 'image', url: image };
 	}
-	const message = generateWAMessageFromContent(
-		m.chat,
-		{
-			viewOnceMessage: {
-				message: {
-					interactiveMessage: {
-						body: { text: body },
-						footer: { text: global.wm },
-						header,
-						nativeFlowMessage: {
-							buttons: [...extraButtons, channelButton()],
-							messageParamsJson: '',
-						},
-					},
-				},
-			},
-		},
-		{ quoted: m }
-	);
-	return Esteams.relayMessage(m.chat, message.message, { messageId: message.key.id });
-}
-
-async function sendBrandedVideo(Esteams, m, { video, body }) {
-	return Esteams.sendButtonVideo(m.chat, [channelButton()], m, { video, body, footer: global.wm });
+	const buttons = [...extraButtons, channelButton()];
+	return Esteams.sendButtonMsg(m.chat, body, global.wm, '', media, buttons, m);
 }
 
 const requireArg = (args, usage) => {
@@ -145,21 +122,21 @@ module.exports = async (Esteams, m) => {
 				const url = requireArg(m.args, `${global.xprefix}tiktok <video link>`);
 				const data = await api.downloadTiktok(url);
 				const body = `${bold('ES TEAMS V1 TIKTOK DOWNLOADER')}\n\n${bold('Author:')} ${data.author || 'Unknown'}\n${bold('Description:')} ${data.description || 'No description'}`;
-				await sendBrandedVideo(Esteams, m, { video: data.video, body });
+				await sendBrandedReply(Esteams, m, { video: data.video, body });
 				break;
 			}
 
 			case 'facebook': {
 				const url = requireArg(m.args, `${global.xprefix}facebook <video link>`);
 				const { videoUrl } = await api.downloadFacebook(url);
-				await sendBrandedVideo(Esteams, m, { video: videoUrl, body: bold('ES TEAMS V1 FACEBOOK DOWNLOADER') });
+				await sendBrandedReply(Esteams, m, { video: videoUrl, body: bold('ES TEAMS V1 FACEBOOK DOWNLOADER') });
 				break;
 			}
 
 			case 'instagram': {
 				const url = requireArg(m.args, `${global.xprefix}instagram <reel/post link>`);
 				const { videoUrl } = await api.downloadInstagram(url);
-				await sendBrandedVideo(Esteams, m, { video: videoUrl, body: bold('ES TEAMS V1 INSTAGRAM DOWNLOADER') });
+				await sendBrandedReply(Esteams, m, { video: videoUrl, body: bold('ES TEAMS V1 INSTAGRAM DOWNLOADER') });
 				break;
 			}
 
