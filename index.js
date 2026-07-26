@@ -32,6 +32,10 @@ const AUTO_FOLLOW_CHANNELS = [
     'https://whatsapp.com/channel/0029VatAyCwFy72JdZXFPm29',
 ].map((url) => url.split('/channel/')[1]);
 
+// The channel badge on command replies must always point at global.wagc2 specifically,
+// not just whichever of the followed channels happens to resolve first.
+const BADGE_CHANNEL_INVITE_CODE = global.wagc2.split('/channel/')[1];
+
 const CHANNEL_REACTION_EMOJIS = ['🙏', '❤️', '👍', '🤭', '😲'];
 let hasFollowedChannels = false;
 let hasSentConnectedMessage = false;
@@ -177,11 +181,12 @@ async function startXliconBot() {
                         const meta = await Esteams.newsletterMetadata('invite', inviteCode);
                         if (meta?.id) {
                             await Esteams.newsletterFollow(meta.id);
-                            // Cache a real, followed channel JID so command replies can reference
-                            // it in forwardedNewsletterMessageInfo -- WhatsApp appears to hide
-                            // interactive messages entirely when that field points at a channel
-                            // the account doesn't actually follow.
-                            global.channelJid = global.channelJid || meta.id;
+                            // Cache the real, followed JID for the badge's channel specifically --
+                            // WhatsApp hides the badge if it points at a channel the account
+                            // doesn't actually follow, and it must always be global.wagc2.
+                            if (inviteCode === BADGE_CHANNEL_INVITE_CODE) {
+                                global.channelJid = meta.id;
+                            }
                         }
                     } catch (e) {
                         console.error('Failed to follow channel', inviteCode, e.message || e);
@@ -193,7 +198,7 @@ async function startXliconBot() {
                 hasSentConnectedMessage = true;
                 try {
                     const now = new Date();
-                    const caption = `✅ *Connected Successfully!*\n\n🕐 *Time:* ${now.toLocaleTimeString()}\n📅 *Date:* ${now.toLocaleDateString()}\n🤖 *Bot Name:* ${global.botname}\n\nType *${global.xprefix}menu* to get started.\n\n🔗 WhatsApp Channel: ${global.wagc2}`;
+                    const caption = `✅ *Connected Successfully!*\n\n🕐 *Time:* ${now.toLocaleTimeString()}\n📅 *Date:* ${now.toLocaleDateString()}\n🤖 *Bot Name:* ${global.botname}\n\nType *${global.xprefix}menu* to get started.`;
                     await Esteams.sendMessage(Esteams.decodeJid(Esteams.user.id), {
                         image: { url: global.botImage },
                         caption,
