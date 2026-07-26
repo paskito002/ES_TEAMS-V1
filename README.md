@@ -42,23 +42,21 @@ Downloaders • Group tools • AI • Media & fun commands — all wrapped in a
 
 <br/><br/>
 
-<a href="https://render.com/deploy?repo=https://github.com/paskito002/ES_TEAMS-V1" target="_blank">
+<a href="https://render.com" target="_blank">
   <img alt="Deploy on Render" src="https://img.shields.io/badge/②_DEPLOY_ON_RENDER-0b141a?style=for-the-badge&logo=render&logoColor=46E3B7"/>
 </a>
 &nbsp;
-<a href="#" target="_blank">
+<a href="https://esteamstv.devs.surf" target="_blank">
   <img alt="Deploy on ES TEAMS TV" src="https://img.shields.io/badge/②_DEPLOY_ON_ES_TEAMS_TV-0b141a?style=for-the-badge&logo=television&logoColor=25D366"/>
 </a>
 
 <br/><br/>
 
-<a href="https://youtube.com/@esteams" target="_blank">
+<a href="https://youtu.be/MGsAvTYV23w" target="_blank">
   <img alt="Watch Deployment Video" src="https://img.shields.io/badge/▶_WATCH_DEPLOYMENT_VIDEO-FF0000?style=for-the-badge&logo=youtube&logoColor=white"/>
 </a>
 
 </div>
-
-<!-- TODO: point "Deploy on ES TEAMS TV" at the real deploy link, and the YouTube badge at the actual deployment tutorial once it's recorded. -->
 
 <br/>
 
