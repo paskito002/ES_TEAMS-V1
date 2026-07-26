@@ -200,7 +200,7 @@ let msgs = generateWAMessageFromContent(id, {
                   forwardingScore: 999,
                   isForwarded: true,
                 forwardedNewsletterMessageInfo: {
-                  newsletterJid: '120363313305181359@newsletter',
+                  newsletterJid: global.channelJid || '120363313305181359@newsletter',
                   newsletterName: ownername,
                   serverMessageId: 143
                 }
@@ -259,7 +259,7 @@ let msgs = generateWAMessageFromContent(id, {
                   forwardingScore: 999,
                   isForwarded: true,
                 forwardedNewsletterMessageInfo: {
-                  newsletterJid: '120363313305181359@newsletter',
+                  newsletterJid: global.channelJid || '120363313305181359@newsletter',
                   newsletterName: ownername,
                   serverMessageId: 143
                 }
@@ -854,7 +854,7 @@ return [...text.matchAll(/@([0-9]{5,16}|0)/g)].map(v => v[1] + '@s.whatsapp.net'
 							forwardingScore: 10,
 							isForwarded: true,
 							forwardedNewsletterMessageInfo: {
-								newsletterJid: '120363313305181359@newsletter', // Ensure global.my and global.my.ch are defined
+								newsletterJid: global.channelJid || '120363313305181359@newsletter', // Ensure global.my and global.my.ch are defined
 								serverMessageId: null,
 								newsletterName: ownername
 							},
