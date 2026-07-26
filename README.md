@@ -80,7 +80,7 @@ Downloaders • Group tools • AI • Media & fun commands — all wrapped in a
 
 <br/>
 
-## 🤝 Connect With ES TEAMS
+## 🤝 CONNECT WITH ES TEAMS
 
 <div align="center">
 
