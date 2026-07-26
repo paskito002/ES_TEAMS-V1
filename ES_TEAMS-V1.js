@@ -26,7 +26,7 @@ function channelInfo() {
 			isForwarded: true,
 			forwardedNewsletterMessageInfo: {
 				newsletterJid: global.channelJid,
-				newsletterName: global.ownername,
+				newsletterName: global.channelName || global.ownername,
 				serverMessageId: -1,
 			},
 		},
