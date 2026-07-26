@@ -171,45 +171,11 @@ async function GroupParticipantsUpdate(Esteams, { id, participants, action }) {
  │ ➪  *Support by Subscribe My Channel :*
  ◎      youtube.com/@esteams
  └─────────────|`
-let msgs = generateWAMessageFromContent(id, {
-  viewOnceMessage: {
-    message: {
-        "messageContextInfo": {
-          "deviceListMetadata": {},
-          "deviceListMetadataVersion": 2
-        },
-        interactiveMessage: proto.Message.InteractiveMessage.create({
-          body: proto.Message.InteractiveMessage.Body.create({
-            text: xliconbody
-          }),
-          footer: proto.Message.InteractiveMessage.Footer.create({
-            text: botname
-          }),
-          header: proto.Message.InteractiveMessage.Header.create({
-          hasMediaAttachment: false,
-          ...await prepareWAMessageMedia({ image: XliconWlcm }, { upload: Esteams.waUploadToServer })
-          }),
-          nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
-            buttons: [{
-            "name": "quick_reply",
-              "buttonParamsJson": `{\"display_text\":\"Welcome 💐\",\"id\":\"\"}`
-            }],
-          }),
-          contextInfo: {
-                  mentionedJid: [n], 
-                  forwardingScore: 999,
-                  isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                  newsletterJid: global.channelJid || '120363313305181359@newsletter',
-                  newsletterName: ownername,
-                  serverMessageId: 143
-                }
-                }
-       })
-    }
-  }
-}, {})
-await Esteams.relayMessage(id, msgs.message, {})
+await Esteams.sendMessage(id, {
+  image: XliconWlcm,
+  caption: xliconbody,
+  mentions: [n],
+})
 				} else if (action == 'remove') {
 				let xliconName = n
                 const xlicondate = moment.tz('Asia/Kolkata').locale('en-IN').format('DD/MM/YYYY');
@@ -217,58 +183,24 @@ await Esteams.relayMessage(id, msgs.message, {})
 	            const xliconmembers = metadata.participants.length
 					xliconbody = `
 ┌─❖
-│『  *Gᴏᴏᴅʙʏᴇ..!! 🍁*  』 
+│『  *Gᴏᴏᴅʙʏᴇ..!! 🍁*  』
 └┬
  ◎ 「  @${xliconName.split("@")[0]}  」
  │ ➪  *Lᴇғᴛ ғʀᴏᴍ*
- ◎      ${metadata.subject} 
+ ◎      ${metadata.subject}
  │ ➪  *Mᴇᴍʙᴇʀ :*
- ◎      ${xeonmembers}th
+ ◎      ${xliconmembers}th
  │ ➪  *Tɪᴍᴇ :*
  ◎      ${xlicontime} ${xlicondate}
  │ ➪  *Support by Subscribe My Channel :*
  ◎      youtube.com/@esteams
  └─────────────||
 `
-let msgs = generateWAMessageFromContent(id, {
-  viewOnceMessage: {
-    message: {
-        "messageContextInfo": {
-          "deviceListMetadata": {},
-          "deviceListMetadataVersion": 2
-        },
-        interactiveMessage: proto.Message.InteractiveMessage.create({
-          body: proto.Message.InteractiveMessage.Body.create({
-            text: xliconbody
-          }),
-          footer: proto.Message.InteractiveMessage.Footer.create({
-            text: botname
-          }),
-          header: proto.Message.InteractiveMessage.Header.create({
-          hasMediaAttachment: false,
-          ...await prepareWAMessageMedia({ image: XliconLft }, { upload: Esteams.waUploadToServer })
-          }),
-          nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
-            buttons: [{
-            "name": "quick_reply",
-              "buttonParamsJson": `{\"display_text\":\"Goodbye 👋\",\"id\":\"\"}`
-            }],
-          }),
-          contextInfo: {
-                  mentionedJid: [n], 
-                  forwardingScore: 999,
-                  isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                  newsletterJid: global.channelJid || '120363313305181359@newsletter',
-                  newsletterName: ownername,
-                  serverMessageId: 143
-                }
-                }
-       })
-    }
-  }
-}, {})
-await Esteams.relayMessage(id, msgs.message, {})
+await Esteams.sendMessage(id, {
+  image: XliconLft,
+  caption: xliconbody,
+  mentions: [n],
+})
 				} else if (action == 'promote') {
 const xlicontime = moment().tz('Asia/Kolkata').locale('en-IN').format('HH:mm:ss');
 const xlicondate = moment.tz('Asia/Kolkata').locale('en-IN').format('DD/MM/YYYY');

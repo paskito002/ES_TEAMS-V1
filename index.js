@@ -193,25 +193,10 @@ async function startXliconBot() {
                 hasSentConnectedMessage = true;
                 try {
                     const now = new Date();
-                    const body = `✅ *Connected Successfully!*\n\n🕐 *Time:* ${now.toLocaleTimeString()}\n📅 *Date:* ${now.toLocaleDateString()}\n🤖 *Bot Name:* ${global.botname}`;
-                    const buttons = [
-                        {
-                            name: 'quick_reply',
-                            buttonParamsJson: JSON.stringify({ display_text: 'START', id: '.start' }),
-                        },
-                        {
-                            name: 'cta_url',
-                            buttonParamsJson: JSON.stringify({
-                                display_text: 'WhatsApp Channel',
-                                url: global.wagc2,
-                                merchant_url: global.wagc2,
-                            }),
-                        },
-                    ];
-                    await Esteams.sendButtonImage(Esteams.decodeJid(Esteams.user.id), buttons, null, {
-                        image: global.botImage,
-                        body,
-                        footer: global.wm,
+                    const caption = `✅ *Connected Successfully!*\n\n🕐 *Time:* ${now.toLocaleTimeString()}\n📅 *Date:* ${now.toLocaleDateString()}\n🤖 *Bot Name:* ${global.botname}\n\nType *${global.xprefix}menu* to get started.\n\n🔗 WhatsApp Channel: ${global.wagc2}`;
+                    await Esteams.sendMessage(Esteams.decodeJid(Esteams.user.id), {
+                        image: { url: global.botImage },
+                        caption,
                     });
                 } catch (e) {
                     console.error('Failed to send connected message', e.message || e);

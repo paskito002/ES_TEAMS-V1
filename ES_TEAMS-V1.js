@@ -1,4 +1,3 @@
-const { proto, generateWAMessageFromContent, prepareWAMessageMedia } = require('@whiskeysockets/baileys');
 const { runtime } = require('./lib/function');
 const api = require('./lib/esteamsApi');
 
@@ -12,75 +11,26 @@ function bold(text) {
 	});
 }
 
-function channelButton() {
-	return {
-		name: 'cta_url',
-		buttonParamsJson: JSON.stringify({
-			display_text: 'WhatsApp Channel',
-			url: global.wagc2,
-			merchant_url: global.wagc2,
-		}),
-	};
+function linkLine(displayText, url) {
+	return `🔗 ${displayText}: ${url}`;
 }
 
-function linkButton(displayText, url) {
-	return {
-		name: 'cta_url',
-		buttonParamsJson: JSON.stringify({ display_text: displayText, url, merchant_url: url }),
-	};
-}
-
-// Sends an image/video (URL or Buffer) as an interactive message with a WhatsApp channel
-// button, following the exact proven-working pattern from the original ES_TEAMS-V1 bot
-// (messageContextInfo + forwardedNewsletterMessageInfo are both required for WhatsApp to
-// actually render native-flow buttons on regular, non-business accounts).
+// Sends an image/video (URL or Buffer) with a plain caption, using only the standard
+// image/video/text message types Baileys has always supported reliably. Native-flow
+// interactive buttons (viewOnceMessage + interactiveMessage) were tried first but the
+// whole message came back invisible on a real device even with a correct, verified
+// structure -- so links are plain clickable text in the caption instead of buttons.
 async function sendBrandedReply(Esteams, m, { image, video, body, extraButtons = [] }) {
-	const buttons = [...extraButtons, channelButton()].map((b) => ({
-		name: b.name,
-		buttonParamsJson: typeof b.buttonParamsJson === 'string' ? b.buttonParamsJson : JSON.stringify(b.buttonParamsJson),
-	}));
+	const links = [...extraButtons.map((b) => linkLine(b.displayText, b.url)), linkLine('WhatsApp Channel', global.wagc2)];
+	const caption = `${body}\n\n${links.join('\n')}`;
 
-	const header = { hasMediaAttachment: true };
 	if (video) {
-		const media = await prepareWAMessageMedia({ video: Buffer.isBuffer(video) ? video : { url: video } }, { upload: Esteams.waUploadToServer });
-		header.videoMessage = media.videoMessage;
-	} else if (image) {
-		const media = await prepareWAMessageMedia({ image: Buffer.isBuffer(image) ? image : { url: image } }, { upload: Esteams.waUploadToServer });
-		header.imageMessage = media.imageMessage;
+		return Esteams.sendMessage(m.chat, { video: Buffer.isBuffer(video) ? video : { url: video }, caption }, { quoted: m });
 	}
-
-	const msg = generateWAMessageFromContent(
-		m.chat,
-		{
-			viewOnceMessage: {
-				message: {
-					messageContextInfo: { deviceListMetadata: {}, deviceListMetadataVersion: 2 },
-					interactiveMessage: proto.Message.InteractiveMessage.create({
-						body: proto.Message.InteractiveMessage.Body.create({ text: body }),
-						footer: proto.Message.InteractiveMessage.Footer.create({ text: global.wm }),
-						header: proto.Message.InteractiveMessage.Header.create(header),
-						nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({ buttons }),
-						contextInfo: {
-							mentionedJid: [m.sender],
-							forwardingScore: 999,
-							isForwarded: true,
-							...(global.channelJid
-								? {
-										forwardedNewsletterMessageInfo: {
-											newsletterJid: global.channelJid,
-											newsletterName: global.ownername,
-											serverMessageId: 143,
-										},
-									}
-								: {}),
-						},
-					}),
-				},
-			},
-		},
-		{ quoted: m }
-	);
-	return Esteams.relayMessage(m.chat, msg.message, { messageId: msg.key.id });
+	if (image) {
+		return Esteams.sendMessage(m.chat, { image: Buffer.isBuffer(image) ? image : { url: image }, caption }, { quoted: m });
+	}
+	return Esteams.sendMessage(m.chat, { text: caption }, { quoted: m });
 }
 
 const requireArg = (args, usage) => {
@@ -253,7 +203,7 @@ module.exports = async (Esteams, m) => {
 				if (!url.startsWith('https://open.spotify.com/track/')) throw new Error('Please provide a valid Spotify track link.');
 				const data = await api.downloadSpotify(url);
 				const body = `${bold('ES TEAMS V1 SPOTIFY DOWNLOADER')}\n\n${bold('Title:')} ${data.title}\n${bold('Duration:')} ${data.duration}\n${bold('Author:')} ${data.channel}`;
-				await sendBrandedReply(Esteams, m, { image: data.thumbnail, body, extraButtons: [linkButton('Download Now', data.DownloadLink)] });
+				await sendBrandedReply(Esteams, m, { image: data.thumbnail, body, extraButtons: [{ displayText: 'Download Now', url: data.DownloadLink }] });
 				break;
 			}
 
@@ -269,7 +219,7 @@ module.exports = async (Esteams, m) => {
 				const query = requireArg(m.args, `${global.xprefix}apk <app name>`);
 				const data = await api.downloadApk(query);
 				const body = `${bold('ES TEAMS V1 APK DOWNLOADER')}\n\n${bold('App Name:')} ${data.apk_name}`;
-				await sendBrandedReply(Esteams, m, { image: data.thumbnail || global.botImage, body, extraButtons: [linkButton('Download APK', data.download_link)] });
+				await sendBrandedReply(Esteams, m, { image: data.thumbnail || global.botImage, body, extraButtons: [{ displayText: 'Download APK', url: data.download_link }] });
 				break;
 			}
 
@@ -277,7 +227,7 @@ module.exports = async (Esteams, m) => {
 				const url = requireArg(m.args, `${global.xprefix}gdrive <google drive link>`);
 				const data = await api.downloadGdrive(url);
 				const body = `${bold('ES TEAMS V1 GOOGLE DRIVE')}\n\n${bold('Name:')} ${data.name}\n${bold('Size:')} ${data.size}`;
-				await sendBrandedReply(Esteams, m, { image: global.botImage, body, extraButtons: [linkButton('Download File', data.download_link)] });
+				await sendBrandedReply(Esteams, m, { image: global.botImage, body, extraButtons: [{ displayText: 'Download File', url: data.download_link }] });
 				break;
 			}
 
@@ -287,7 +237,7 @@ module.exports = async (Esteams, m) => {
 				await sendBrandedReply(Esteams, m, {
 					image: global.botImage,
 					body: bold('ES TEAMS V1 WEBSITE DOWNLOADER'),
-					extraButtons: [linkButton('Download', downloadUrl)],
+					extraButtons: [{ displayText: 'Download', url: downloadUrl }],
 				});
 				break;
 			}
@@ -313,7 +263,7 @@ module.exports = async (Esteams, m) => {
 			case 'technews': {
 				const n = await api.getTechNews();
 				const body = `${bold('ES TEAMS V1 TECH NEWS')}\n\n${bold('Title:')} ${n.title}\n\n${n.description}`;
-				await sendBrandedReply(Esteams, m, { image: n.image, body, extraButtons: [linkButton('View Article', n.link)] });
+				await sendBrandedReply(Esteams, m, { image: n.image, body, extraButtons: [{ displayText: 'View Article', url: n.link }] });
 				break;
 			}
 
