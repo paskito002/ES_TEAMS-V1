@@ -135,7 +135,11 @@ async function startXliconBot() {
     if (pairingCode && !Esteams.authState.creds.registered) {
         if (useMobile) throw new Error('Cannot use pairing code with mobile API');
 
-        phoneNumber = process.env.PHONE_NUMBER || phoneNumber;
+        phoneNumber = (process.env.PHONE_NUMBER || phoneNumber).replace(/[^0-9]/g, '');
+
+        if (!PhoneNumber('+' + phoneNumber).isValid()) {
+            console.error(`Invalid phone number "${phoneNumber}" -- pairing code will not link. Set PHONE_NUMBER to digits only, with country code, no + or spaces (e.g. 2349037524605).`);
+        }
 
         setTimeout(async () => {
             try {
