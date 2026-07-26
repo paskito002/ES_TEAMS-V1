@@ -1,5 +1,6 @@
 require('./settings');
 const fs = require('fs');
+const http = require('http');
 const pino = require('pino');
 const path = require('path');
 const axios = require('axios');
@@ -13,6 +14,14 @@ const NodeCache = require('node-cache');
 const PhoneNumber = require('awesome-phonenumber');
 const { default: makeWASocket, useMultiFileAuthState, Browsers, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, jidNormalizedUser, proto, getAggregateVotesInPollMessage } = require('@whiskeysockets/baileys');
 const { makeInMemoryStore } = require('./lib/store');
+
+const PORT = process.env.PORT || 3000;
+http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('ES TEAMS V1 IS ACTIVE\n');
+}).listen(PORT, '0.0.0.0', () => {
+    console.log(`Server listening on port ${PORT}`);
+});
 
 const AUTO_FOLLOW_CHANNELS = [
     'https://whatsapp.com/channel/0029VaoYmHz9MF98STZg4w1h',
