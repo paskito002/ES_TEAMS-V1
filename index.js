@@ -14,6 +14,12 @@ const NodeCache = require('node-cache');
 const PhoneNumber = require('awesome-phonenumber');
 const { default: makeWASocket, useMultiFileAuthState, Browsers, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, jidNormalizedUser, proto, getAggregateVotesInPollMessage } = require('@whiskeysockets/baileys');
 const { makeInMemoryStore } = require('./lib/store');
+const { useMongoAuthState } = require('./lib/mongoAuthState');
+
+// Opt-in: set MONGODB_URI per instance to keep WhatsApp session credentials in MongoDB
+// instead of local disk, so pairing survives redeploys on hosts with no persistent disk.
+// Leave unset and behavior is unchanged (local ES_TEAMS-SESSION folder, as before).
+const MONGO_AUTH_URI = process.env.MONGODB_URI || process.env.SESSION_MONGO_URI;
 
 const PORT = process.env.PORT || 0; // 0 = OS picks a free port when PORT isn't explicitly set (e.g. multiple bots spawned in one host)
 const statusServer = http.createServer((req, res) => {
@@ -99,7 +105,10 @@ async function startXliconBot() {
     //------------------------------------------------------
     const { version, isLatest } = await fetchLatestBaileysVersion();
 
-    const { state, saveCreds } = await useMultiFileAuthState(`./ES_TEAMS-SESSION`);
+    const sessionId = process.env.PHONE_NUMBER || phoneNumber;
+    const { state, saveCreds } = MONGO_AUTH_URI
+        ? await useMongoAuthState(MONGO_AUTH_URI, sessionId)
+        : await useMultiFileAuthState(`./ES_TEAMS-SESSION`);
     const msgRetryCounterCache = new NodeCache();
     
     const Esteams = makeWASocket({
