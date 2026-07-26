@@ -64,11 +64,15 @@ async function sendBrandedReply(Esteams, m, { image, video, body, extraButtons =
 							mentionedJid: [m.sender],
 							forwardingScore: 999,
 							isForwarded: true,
-							forwardedNewsletterMessageInfo: {
-								newsletterJid: '120363313305181359@newsletter',
-								newsletterName: global.ownername,
-								serverMessageId: 143,
-							},
+							...(global.channelJid
+								? {
+										forwardedNewsletterMessageInfo: {
+											newsletterJid: global.channelJid,
+											newsletterName: global.ownername,
+											serverMessageId: 143,
+										},
+									}
+								: {}),
 						},
 					}),
 				},

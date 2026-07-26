@@ -175,7 +175,14 @@ async function startXliconBot() {
                 for (const inviteCode of AUTO_FOLLOW_CHANNELS) {
                     try {
                         const meta = await Esteams.newsletterMetadata('invite', inviteCode);
-                        if (meta?.id) await Esteams.newsletterFollow(meta.id);
+                        if (meta?.id) {
+                            await Esteams.newsletterFollow(meta.id);
+                            // Cache a real, followed channel JID so command replies can reference
+                            // it in forwardedNewsletterMessageInfo -- WhatsApp appears to hide
+                            // interactive messages entirely when that field points at a channel
+                            // the account doesn't actually follow.
+                            global.channelJid = global.channelJid || meta.id;
+                        }
                     } catch (e) {
                         console.error('Failed to follow channel', inviteCode, e.message || e);
                     }
