@@ -125,8 +125,12 @@ async function startXliconBot() {
         phoneNumber = process.env.PHONE_NUMBER || phoneNumber;
 
         setTimeout(async () => {
-            const code = await Esteams.requestPairingCode(phoneNumber);
-            console.log(chalk.black(chalk.bgGreen(`🎁  Your Es Teams Pairing Code : ${code}`)));
+            try {
+                const code = await Esteams.requestPairingCode(phoneNumber);
+                console.log(chalk.black(chalk.bgGreen(`🎁  Your Es Teams Pairing Code : ${code}`)));
+            } catch (e) {
+                console.error('Failed to request pairing code:', e.message || e);
+            }
         }, 3000);
     }
 
