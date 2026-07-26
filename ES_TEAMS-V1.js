@@ -61,7 +61,8 @@ module.exports = async (Esteams, m) => {
 
 	try {
 		switch (command) {
-			case 'menu': {
+			case 'menu':
+			case 'start': {
 				await m.reply(MENU);
 				break;
 			}
