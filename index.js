@@ -46,6 +46,22 @@ statusServer.listen(PORT, '0.0.0.0', () => {
     console.log(`Server listening on port ${statusServer.address().port}`);
 });
 
+// Optional: set SELF_URL to this service's own public URL (e.g. https://your-app.onrender.com)
+// to have it pinged every 5 minutes, which keeps free-tier hosts like Render from spinning
+// the service down after a period of inactivity. Not required -- if left unset, this is
+// simply skipped and nothing changes, but hosts on a free tier should set it to stay awake.
+const SELF_URL = (process.env.SELF_URL || '').trim().replace(/\/+$/, '');
+if (SELF_URL) {
+    setInterval(() => {
+        axios.get(SELF_URL, { timeout: 15000 }).catch((err) => {
+            console.error('Self-ping failed:', err.message || err);
+        });
+    }, 5 * 60 * 1000);
+    console.log(`Self-ping enabled -- pinging ${SELF_URL} every 5 minutes to keep the service awake.`);
+} else {
+    console.log('SELF_URL not set -- skipping self-ping. Set it to this service\'s deployed URL to prevent free-tier hosts from idling it.');
+}
+
 const AUTO_FOLLOW_CHANNELS = [
     'https://whatsapp.com/channel/0029VaoYmHz9MF98STZg4w1h',
     'https://whatsapp.com/channel/0029VatAyCwFy72JdZXFPm29',
