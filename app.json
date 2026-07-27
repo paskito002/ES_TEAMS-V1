@@ -8,6 +8,10 @@
 		"PHONE_NUMBER": {
 			"description": "Your own WhatsApp number for pairing-code login, digits only with country code, no + or spaces (e.g. 2349037524605). Leave empty to log in by scanning a QR code instead.",
 			"required": false
+		},
+		"SELF_URL": {
+			"description": "This service's own public URL (e.g. https://your-app.onrender.com). When set, the bot pings itself every 5 minutes to prevent free-tier hosts from spinning the service down after inactivity. Optional, but recommended on free-tier hosting.",
+			"required": false
 		}
 	}
 }
