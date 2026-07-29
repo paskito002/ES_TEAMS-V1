@@ -133,44 +133,19 @@ async function main() {
 		}
 	};
 
-	try {
-		const { data } = await axios.get(`${BASE}/docs`, { timeout: 15000 });
-		const html = String(data);
-		console.log(`DIAG  docs-length: ${html.length}`);
-		const routes = [...new Set([...html.matchAll(/\/[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_{}-]+)+/g)].map((m) => m[0]))];
-		console.log(`DIAG  docs-routes: ${JSON.stringify(routes).slice(0, 2000)}`);
-		for (const kw of ['gpt', 'wasted', 'triggered', 'chatbot', 'openai']) {
-			const idx = html.toLowerCase().indexOf(kw);
-			if (idx >= 0) console.log(`DIAG  docs-mentions-"${kw}": ...${html.slice(Math.max(0, idx - 80), idx + 80).replace(/\s+/g, ' ')}...`);
+	for (const doc of ['/endpoints/uploader', '/endpoints/ai']) {
+		try {
+			const { data } = await axios.get(`${BASE}${doc}`, { timeout: 15000 });
+			const html = String(data);
+			const codeBlocks = [...html.matchAll(/<code[^>]*>([\s\S]{0,400}?)<\/code>/g)].map((m) => m[1].replace(/<[^>]+>/g, '').trim()).filter(Boolean);
+			console.log(`DIAG  ${doc} length=${html.length} codeBlocks=${JSON.stringify(codeBlocks.slice(0, 15))}`);
+		} catch (e) {
+			console.log(`DIAG  ${doc}: HTTP ${e?.response?.status} ${describeErrorBody(e?.response?.data)}`);
 		}
-	} catch (e) {
-		console.log(`DIAG  docs: HTTP ${e?.response?.status} ${describeErrorBody(e?.response?.data)}`);
 	}
 
-	await (async () => {
-		try {
-			const form = new FormData();
-			form.append('file', Buffer.from('ES TEAMS V1 API TEST'), 'test.png');
-			const { data } = await axios.post('https://telegra.ph/upload', form, { headers: { ...form.getHeaders(), 'User-Agent': FETCH_UA }, timeout: 20000 });
-			console.log(`DIAG  telegra.ph upload: ${JSON.stringify(data).slice(0, 200)}`);
-		} catch (e) {
-			console.log(`DIAG  telegra.ph upload: HTTP ${e?.response?.status} ${describeErrorBody(e?.response?.data)}`);
-		}
-	})();
-
-	for (const url of [
-		'https://api.some-random-api.com/canvas/wasted',
-		'https://some-random-api.com/canvas/wasted',
-		'https://api.popcat.xyz/wasted',
-		'https://api.popcat.xyz/triggered',
-	]) {
-		try {
-			const { data, headers } = await axios.get(url, { params: { avatar: TEST_IMAGE, image: TEST_IMAGE }, timeout: 15000, responseType: 'arraybuffer' });
-			console.log(`DIAG  ${url}: content-type=${headers['content-type']} bytes=${data.length}`);
-		} catch (e) {
-			console.log(`DIAG  ${url}: HTTP ${e?.response?.status} ${describeErrorBody(e?.response?.data)}`);
-		}
-	}
+	await rawGet('ai/deepseek-v3', `${BASE}/ai/deepseek-v3`, { text: 'Say the word PONG and nothing else.' });
+	await rawGet('canvas/triggered (some-random-api)', 'https://api.some-random-api.com/canvas/triggered', { avatar: TEST_IMAGE });
 
 	console.log('\n========== SUMMARY ==========');
 	const pass = results.filter((r) => r.ok);
