@@ -1,41 +1,3 @@
-//══════════════════════════════════════════════════════════════════════════════════════════════════════//
-//                                                                                                      //
-//                                    𝐄𝐒 𝐓𝐄𝐀𝐌𝐒 𝐕𝟏                                                //
-//                                                                                                      //
-//                                         Ｖ：4.0                                                       //
-//                                                                                                      //
-//                                                                                                      //      
-//               ██╗  ██╗██╗     ██╗ ██████╗ ██████╗ ███╗   ██╗      ██╗   ██╗██╗  ██╗                  //              
-//                ██╗██╔╝██║     ██║██╔════╝██╔═══██╗████╗  ██║      ██║   ██║██║  ██║                  //
-//                ╚███╔╝ ██║     ██║██║     ██║   ██║██╔██╗ ██║█████╗██║   ██║███████║                  // 
-//                ██╔██╗ ██║     ██║██║     ██║   ██║██║╚██╗██║╚════╝╚██╗ ██╔╝╚════██║                  // 
-//               ██╔╝ ██╗███████╗██║╚██████╗╚██████╔╝██║ ╚████║       ╚████╔╝      ██║                  //
-//                ═╝  ╚═╝╚══════╝╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝        ╚═══╝       ╚═╝                  // 
-//                                                                                                      //
-//                                                                                                      //
-//                                                                                                      //
-//══════════════════════════════════════════════════════════════════════════════════════════════════════//
-//*
-//  * @project_name : ES_TEAMS-V1
-//  * @author : ES TEAMS TECH
-//  * @youtube : https://www.youtube.com/@esteams
-//  * @description : ES_TEAMS-V1 ,A Multi-functional whatsapp user bot.
-//*
-//*
-//base by Es teams 
-//re-upload? recode? copy code? give credit ya :)
-//Instagram: null
-//Telegram: t.me/examsolutionteam
-//GitHub: @paskito002
-//WhatsApp: +2348187637779
-//want more free bot scripts? subscribe to my youtube channel: https://youtube.com/@esteams
-//   * Created By Github: ES TEAMS
-//   * Credit To ES TEAMS TECH
-//   * © 2024 ES_TEAMS-V1
-// ⛥┌┤
-// */
-
-
 require('../settings');
 const fs = require('fs');
 const path = require('path');
@@ -499,7 +461,6 @@ Esteams.sendImage = async (jid, path, caption = '', quoted = '', options) => {
   try {
     m = await Esteams.sendMessage(jid, message, { ...opt, ...options });
   } catch (e) {
-    //console.error(e)
     m = null;
   } finally {
     if (!m) m = await Esteams.sendMessage(jid, { ...message, [mtype]: file }, { ...opt, ...options });
@@ -788,7 +749,7 @@ return [...text.matchAll(/@([0-9]{5,16}|0)/g)].map(v => v[1] + '@s.whatsapp.net'
 							forwardingScore: 10,
 							isForwarded: true,
 							forwardedNewsletterMessageInfo: {
-								newsletterJid: global.channelJid || '120363313305181359@newsletter', // Ensure global.my and global.my.ch are defined
+								newsletterJid: global.channelJid || '120363313305181359@newsletter',
 								serverMessageId: null,
 								newsletterName: ownername
 							},
