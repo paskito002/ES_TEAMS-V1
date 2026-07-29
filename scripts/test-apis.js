@@ -133,19 +133,34 @@ async function main() {
 		}
 	};
 
-	for (const doc of ['/endpoints/uploader', '/endpoints/ai']) {
+	const realPng = await api.generateQr('ES TEAMS V1 UPLOAD HOST TEST');
+
+	for (const [label, upload] of [
+		['telegra.ph', async () => {
+			const form = new FormData();
+			form.append('file', realPng, { filename: 'test.png', contentType: 'image/png' });
+			return axios.post('https://telegra.ph/upload', form, { headers: { ...form.getHeaders(), 'User-Agent': FETCH_UA }, timeout: 20000 });
+		}],
+		['uguu.se', async () => {
+			const form = new FormData();
+			form.append('files[]', realPng, { filename: 'test.png', contentType: 'image/png' });
+			return axios.post('https://uguu.se/upload', form, { headers: { ...form.getHeaders(), 'User-Agent': FETCH_UA }, timeout: 20000 });
+		}],
+		['freeimage.host', async () => {
+			const form = new FormData();
+			form.append('source', realPng.toString('base64'));
+			form.append('type', 'base64');
+			form.append('action', 'upload');
+			return axios.post('https://freeimage.host/api/1/upload', form, { headers: { ...form.getHeaders(), 'User-Agent': FETCH_UA }, timeout: 20000 });
+		}],
+	]) {
 		try {
-			const { data } = await axios.get(`${BASE}${doc}`, { timeout: 15000 });
-			const html = String(data);
-			const codeBlocks = [...html.matchAll(/<code[^>]*>([\s\S]{0,400}?)<\/code>/g)].map((m) => m[1].replace(/<[^>]+>/g, '').trim()).filter(Boolean);
-			console.log(`DIAG  ${doc} length=${html.length} codeBlocks=${JSON.stringify(codeBlocks.slice(0, 15))}`);
+			const { data } = await upload();
+			console.log(`DIAG  ${label} upload: ${JSON.stringify(data).slice(0, 250)}`);
 		} catch (e) {
-			console.log(`DIAG  ${doc}: HTTP ${e?.response?.status} ${describeErrorBody(e?.response?.data)}`);
+			console.log(`DIAG  ${label} upload: HTTP ${e?.response?.status} ${describeErrorBody(e?.response?.data)}`);
 		}
 	}
-
-	await rawGet('ai/deepseek-v3', `${BASE}/ai/deepseek-v3`, { text: 'Say the word PONG and nothing else.' });
-	await rawGet('canvas/triggered (some-random-api)', 'https://api.some-random-api.com/canvas/triggered', { avatar: TEST_IMAGE });
 
 	console.log('\n========== SUMMARY ==========');
 	const pass = results.filter((r) => r.ok);
