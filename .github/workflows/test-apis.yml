@@ -1,0 +1,15 @@
+name: Test APIs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-apis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --omit=dev
+      - run: node scripts/test-apis.js
