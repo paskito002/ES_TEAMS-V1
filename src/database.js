@@ -66,8 +66,8 @@ if (/mongo/.test(global.tempatDB)) {
 		write = async (data) => {
 			this.data = !!data ? data : global.db
 			let dirname = path.dirname(this.file)
-			if (!fs.existsSync(dirname)) fs.mkdirSync(dirname, { recursive: true })
-			fs.writeFileSync(this.file, JSON.stringify(this.data, null, 2))
+			await fs.promises.mkdir(dirname, { recursive: true })
+			await fs.promises.writeFile(this.file, JSON.stringify(this.data))
 			return this.file
 		}
 	}
