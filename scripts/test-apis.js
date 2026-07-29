@@ -16,9 +16,23 @@ async function check(name, fn) {
 		console.log(`PASS  ${name} (${ms}ms) ${summarize(data)}`);
 	} catch (e) {
 		const ms = Date.now() - start;
-		const msg = e?.response?.status ? `HTTP ${e.response.status} ${e.message}` : (e.message || String(e));
+		const msg = e?.response?.status ? `HTTP ${e.response.status} ${describeErrorBody(e.response.data)}` : (e.message || String(e));
 		results.push({ name, ok: false, ms, note: msg });
 		console.log(`FAIL  ${name} (${ms}ms) ${msg}`);
+	}
+}
+
+function describeErrorBody(data) {
+	if (data == null) return '(no body)';
+	if (Buffer.isBuffer(data)) {
+		const text = data.toString('utf8');
+		return text.slice(0, 300).replace(/\n/g, ' ');
+	}
+	if (typeof data === 'string') return data.slice(0, 300).replace(/\n/g, ' ');
+	try {
+		return JSON.stringify(data).slice(0, 300);
+	} catch {
+		return String(data);
 	}
 }
 
@@ -101,6 +115,22 @@ async function main() {
 
 	await check('getTrivia', () => api.getTrivia());
 	await check('getHoroscope', () => api.getHoroscope('aries'));
+
+	console.log('\n========== DIAGNOSTICS ==========');
+	const axios = require('axios');
+	const BASE = 'https://apis.davidcyril.name.ng';
+	const rawGet = async (label, url, params) => {
+		try {
+			const { data } = await axios.get(url, { params, timeout: 15000 });
+			console.log(`DIAG  ${label}: ${JSON.stringify(data).slice(0, 500)}`);
+		} catch (e) {
+			console.log(`DIAG  ${label}: HTTP ${e?.response?.status} ${describeErrorBody(e?.response?.data)}`);
+		}
+	};
+	await rawGet('root', `${BASE}/`);
+	await rawGet('horoscope-raw', 'https://horoscope-app-api.vercel.app/api/v1/get-horoscope/daily', { sign: 'aries', day: 'today' });
+	await rawGet('canvas-list', `${BASE}/canvas`);
+	await rawGet('ai-list', `${BASE}/ai`);
 
 	console.log('\n========== SUMMARY ==========');
 	const pass = results.filter((r) => r.ok);
