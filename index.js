@@ -26,7 +26,7 @@ const NodeCache = require('node-cache');
 const PhoneNumber = require('awesome-phonenumber');
 const { default: makeWASocket, useMultiFileAuthState, Browsers, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, jidNormalizedUser, proto, getAggregateVotesInPollMessage } = require('@whiskeysockets/baileys');
 const { makeInMemoryStore } = require('./lib/store');
-const { useMongoAuthState } = require('./lib/mongoAuthState');
+const { useMongoAuthState, clearMongoAuthState } = require('./lib/mongoAuthState');
 const { patchSendMessage } = require('./lib/channelBadge');
 
 // Opt-in: set MONGODB_URI per instance to keep WhatsApp session credentials in MongoDB
@@ -234,8 +234,24 @@ async function startXliconBot() {
                 console.log('Connection Timed Out, Attempting to Reconnect...');
                 startXliconBot();
             } else if (reason === DisconnectReason.badSession) {
-                console.log('Delete Session and Scan again...');
-                process.exit(1);
+                // The stored session is corrupted/invalid -- reconnecting with the same
+                // creds would just fail the same way again. Previously this called
+                // process.exit(1) and relied on something outside the process to restart
+                // it into that exact same broken state, which on a host that runs this
+                // process directly (no supervisor) meant the bot just stayed down until a
+                // human intervened. Clear the stale session and restart fresh instead.
+                console.log('Session is invalid -- clearing it and starting fresh with a new pairing code...');
+                try {
+                    if (MONGO_AUTH_URI) {
+                        await clearMongoAuthState(MONGO_AUTH_URI, sessionId);
+                    } else {
+                        fs.rmSync(SESSION_PATH, { recursive: true, force: true });
+                    }
+                } catch (e) {
+                    console.error('Failed to clear stale session:', e.message || e);
+                }
+                pairingCodeRequested = false;
+                startXliconBot();
             } else if (reason === DisconnectReason.connectionReplaced) {
                 console.log('Close current Session first...');
                 Esteams.logout();

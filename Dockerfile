@@ -17,4 +17,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["node", "index.js", "--server"]
+CMD ["node", "start.js", "--server"]
