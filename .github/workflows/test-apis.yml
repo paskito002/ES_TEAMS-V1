@@ -2,6 +2,12 @@ name: Test APIs
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - claude/whatsapp-pairing-code-link-srcjgu
+    paths:
+      - scripts/test-apis.js
+      - .github/workflows/test-apis.yml
 
 jobs:
   test-apis:
