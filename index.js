@@ -89,6 +89,13 @@ let hasSentConnectedMessage = false;
 // old one is used invalidates it, so the code the user sees keeps changing under them and
 // none of them ever work -- this is what was making pairing look broken again.
 let pairingCodeRequested = false;
+// Guards against a logged-out/rejected number retrying in a tight loop: each consecutive
+// loggedOut disconnect waits longer before the next attempt, and after a few failures in a
+// row it stops retrying automatically instead of hammering WhatsApp's servers forever
+// (which is both spammy in the logs and a real risk of getting the number/IP flagged).
+// Resets to 0 the moment a connection actually succeeds.
+let consecutiveLoggedOut = 0;
+const MAX_LOGGED_OUT_RETRIES = 3;
 
 // PHONE_NUMBER must be set to *your own* WhatsApp number (digits only, with country
 // code, e.g. 2349037524605) for pairing-code login to work -- the code WhatsApp issues
@@ -256,8 +263,14 @@ async function startXliconBot() {
                 console.log('Close current Session first...');
                 Esteams.logout();
             } else if (reason === DisconnectReason.loggedOut) {
-                console.log('Device unlinked -- requesting a fresh pairing code...');
-                startXliconBot();
+                consecutiveLoggedOut++;
+                if (consecutiveLoggedOut > MAX_LOGGED_OUT_RETRIES) {
+                    console.error(`Device unlinked ${consecutiveLoggedOut} times in a row -- WhatsApp is likely rejecting this number right now. Stopping automatic retries so we don't get flagged for spamming pairing requests. Restart the service manually once you're ready to try again.`);
+                } else {
+                    const delayMs = 15000 * consecutiveLoggedOut; // 15s, 30s, 45s...
+                    console.log(`Device unlinked -- waiting ${delayMs / 1000}s before requesting a fresh pairing code (attempt ${consecutiveLoggedOut}/${MAX_LOGGED_OUT_RETRIES})...`);
+                    setTimeout(() => startXliconBot(), delayMs);
+                }
             } else if (reason === DisconnectReason.multideviceMismatch) {
                 console.log('Scan again...');
             } else {
@@ -265,6 +278,7 @@ async function startXliconBot() {
             }
         }
         if (connection == 'open') {
+            consecutiveLoggedOut = 0;
             console.log('Connected to : ' + JSON.stringify(Esteams.user, null, 2));
 
             if (!hasFollowedChannels) {
