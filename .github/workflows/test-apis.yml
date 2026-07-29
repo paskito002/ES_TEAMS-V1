@@ -17,5 +17,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install --omit=dev
+      - run: npm install --no-save --no-package-lock axios form-data
       - run: node scripts/test-apis.js
+        timeout-minutes: 15
