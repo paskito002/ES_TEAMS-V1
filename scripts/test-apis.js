@@ -43,8 +43,9 @@ function summarize(data) {
 	return String(data);
 }
 
-const TEST_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/JPEG_example_JPG_RIP_100.jpg/640px-JPEG_example_JPG_RIP_100.jpg';
+const TEST_IMAGE = 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
 const TEST_AUDIO = 'https://upload.wikimedia.org/wikipedia/commons/6/61/Tim_Janis_-_01_-_A_Walk_In_The_Woods.mp3';
+const FETCH_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 async function main() {
 	await check('uploadToCatbox', async () => {
@@ -54,14 +55,14 @@ async function main() {
 
 	await check('downloadTiktok', () => api.downloadTiktok('https://www.tiktok.com/@tiktok/video/7106594312292453675'));
 	await check('downloadFacebook', () => api.downloadFacebook('https://www.facebook.com/watch/?v=10153231379946729'));
-	await check('downloadTwitter', () => api.downloadTwitter('https://twitter.com/Twitter/status/1445078208190291973'));
+	await check('downloadTwitter', () => api.downloadTwitter('https://x.com/elonmusk/status/1868872687376568593'));
 	await check('downloadYoutube', () => api.downloadYoutube('https://www.youtube.com/watch?v=dQw4w9WgXcQ'));
 	await check('downloadInstagram', () => api.downloadInstagram('https://www.instagram.com/p/CqIbCzYMi5C/'));
 	await check('downloadSong', () => api.downloadSong('Faded Alan Walker'));
 	await check('downloadVideoSong', () => api.downloadVideoSong('Faded Alan Walker'));
-	await check('downloadApk', () => api.downloadApk('whatsapp'));
+	await check('downloadApk', () => api.downloadApk('Termux'));
 	await check('downloadGdrive', () => api.downloadGdrive('https://drive.google.com/file/d/1BvcHVWNU4Q4wPHVN0J5x2n8ns6FzGnKb/view'));
-	await check('downloadSpotify', () => api.downloadSpotify('https://open.spotify.com/track/7qiZfU4dY1lWllzX7mPBI3'));
+	await check('downloadSpotify', () => api.downloadSpotify('https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b'));
 	await check('downloadWebsite', () => api.downloadWebsite('https://example.com'));
 
 	await check('getLyrics', () => api.getLyrics('Shape of You Ed Sheeran'));
@@ -81,7 +82,7 @@ async function main() {
 
 	await check('recognizeSong', async () => {
 		const axios = require('axios');
-		const { data } = await axios.get(TEST_AUDIO, { responseType: 'arraybuffer', timeout: 20000 });
+		const { data } = await axios.get(TEST_AUDIO, { responseType: 'arraybuffer', timeout: 20000, headers: { 'User-Agent': FETCH_UA } });
 		return api.recognizeSong(Buffer.from(data), 'clip.mp3');
 	});
 
@@ -118,19 +119,60 @@ async function main() {
 
 	console.log('\n========== DIAGNOSTICS ==========');
 	const axios = require('axios');
+	const FormData = require('form-data');
 	const BASE = 'https://apis.davidcyril.name.ng';
 	const rawGet = async (label, url, params) => {
 		try {
 			const { data } = await axios.get(url, { params, timeout: 15000 });
-			console.log(`DIAG  ${label}: ${JSON.stringify(data).slice(0, 500)}`);
+			console.log(`DIAG  ${label}: ${JSON.stringify(data).slice(0, 300)}`);
 		} catch (e) {
-			console.log(`DIAG  ${label}: HTTP ${e?.response?.status} ${describeErrorBody(e?.response?.data)}`);
+			console.log(`DIAG  ${label}: HTTP ${e?.response?.status} ${describeErrorBody(e?.response?.data).slice(0, 200)}`);
 		}
 	};
-	await rawGet('root', `${BASE}/`);
-	await rawGet('horoscope-raw', 'https://horoscope-app-api.vercel.app/api/v1/get-horoscope/daily', { sign: 'aries', day: 'today' });
-	await rawGet('canvas-list', `${BASE}/canvas`);
-	await rawGet('ai-list', `${BASE}/ai`);
+
+	try {
+		const { data } = await axios.get(`${BASE}/`, { timeout: 15000 });
+		const html = String(data);
+		console.log(`DIAG  root-length: ${html.length}`);
+		const hrefs = [...html.matchAll(/href="([^"]+)"/g)].map((m) => m[1]).filter((h) => h.startsWith('/'));
+		console.log(`DIAG  root-local-links: ${JSON.stringify([...new Set(hrefs)]).slice(0, 1000)}`);
+		for (const kw of ['gpt', 'wasted', 'triggered', 'canvas', 'meme']) {
+			const idx = html.toLowerCase().indexOf(kw);
+			if (idx >= 0) console.log(`DIAG  root-mentions-"${kw}": ...${html.slice(Math.max(0, idx - 60), idx + 60).replace(/\s+/g, ' ')}...`);
+		}
+	} catch (e) {
+		console.log(`DIAG  root: HTTP ${e?.response?.status} ${describeErrorBody(e?.response?.data)}`);
+	}
+
+	for (const path of ['/ai/gpt', '/ai/chatgpt', '/ai/gpt4o', '/gpt', '/chatgpt', '/ai/gemini']) {
+		await rawGet(`try ${path}`, `${BASE}${path}`, { text: 'hello' });
+	}
+	for (const path of ['/canvas/wasted', '/canvas/triggered', '/meme/wasted', '/meme/triggered', '/wasted', '/triggered']) {
+		await rawGet(`try ${path}`, `${BASE}${path}`, { image: TEST_IMAGE });
+	}
+
+	await (async () => {
+		try {
+			const form = new FormData();
+			form.append('file', Buffer.from('ES TEAMS V1 API TEST'), 'test.txt');
+			const { data } = await axios.post('https://0x0.st', form, { headers: { ...form.getHeaders(), 'User-Agent': FETCH_UA }, timeout: 20000 });
+			console.log(`DIAG  0x0.st upload: ${JSON.stringify(data).slice(0, 200)}`);
+		} catch (e) {
+			console.log(`DIAG  0x0.st upload: HTTP ${e?.response?.status} ${describeErrorBody(e?.response?.data)}`);
+		}
+	})();
+
+	await (async () => {
+		try {
+			const form = new FormData();
+			form.append('reqtype', 'fileupload');
+			form.append('fileToUpload', Buffer.from('ES TEAMS V1 API TEST'), 'test.txt');
+			const { data } = await axios.post('https://catbox.moe/user/api.php', form, { headers: { ...form.getHeaders() }, timeout: 20000 });
+			console.log(`DIAG  catbox no-UA: ${JSON.stringify(data).slice(0, 200)}`);
+		} catch (e) {
+			console.log(`DIAG  catbox no-UA: HTTP ${e?.response?.status} ${describeErrorBody(e?.response?.data)}`);
+		}
+	})();
 
 	console.log('\n========== SUMMARY ==========');
 	const pass = results.filter((r) => r.ok);
