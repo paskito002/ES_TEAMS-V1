@@ -45,12 +45,11 @@ function summarize(data) {
 
 const TEST_IMAGE = 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
 const TEST_AUDIO = 'https://upload.wikimedia.org/wikipedia/commons/6/61/Tim_Janis_-_01_-_A_Walk_In_The_Woods.mp3';
-const FETCH_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 async function main() {
-	await check('uploadToCatbox', async () => {
+	await check('uploadImage', async () => {
 		const buf = Buffer.from('ES TEAMS V1 API TEST');
-		return api.uploadToCatbox(buf, 'test.txt');
+		return api.uploadImage(buf, 'test.txt');
 	});
 
 	await check('downloadTiktok', () => api.downloadTiktok('https://www.tiktok.com/@tiktok/video/7106594312292453675'));
@@ -108,8 +107,8 @@ async function main() {
 
 	await check('generateQr+readQrFromImage', async () => {
 		const qrBuffer = await api.generateQr('ES TEAMS V1 ROUNDTRIP TEST');
-		const uploadedUrl = await api.uploadToCatbox(qrBuffer, 'qr.png');
-		if (!uploadedUrl.startsWith('https://files.catbox.moe')) throw new Error('catbox upload failed, cannot roundtrip test readQrFromImage');
+		const uploadedUrl = await api.uploadImage(qrBuffer, 'qr.png');
+		if (!uploadedUrl.startsWith('https://')) throw new Error('image upload failed, cannot roundtrip test readQrFromImage');
 		return api.readQrFromImage(uploadedUrl);
 	});
 
@@ -119,48 +118,6 @@ async function main() {
 
 	await check('getTrivia', () => api.getTrivia());
 	await check('getHoroscope', () => api.getHoroscope('aries'));
-
-	console.log('\n========== DIAGNOSTICS ==========');
-	const axios = require('axios');
-	const FormData = require('form-data');
-	const BASE = 'https://apis.davidcyril.name.ng';
-	const rawGet = async (label, url, params) => {
-		try {
-			const { data } = await axios.get(url, { params, timeout: 15000 });
-			console.log(`DIAG  ${label}: ${JSON.stringify(data).slice(0, 300)}`);
-		} catch (e) {
-			console.log(`DIAG  ${label}: HTTP ${e?.response?.status} ${describeErrorBody(e?.response?.data).slice(0, 200)}`);
-		}
-	};
-
-	const realPng = await api.generateQr('ES TEAMS V1 UPLOAD HOST TEST');
-
-	for (const [label, upload] of [
-		['telegra.ph', async () => {
-			const form = new FormData();
-			form.append('file', realPng, { filename: 'test.png', contentType: 'image/png' });
-			return axios.post('https://telegra.ph/upload', form, { headers: { ...form.getHeaders(), 'User-Agent': FETCH_UA }, timeout: 20000 });
-		}],
-		['uguu.se', async () => {
-			const form = new FormData();
-			form.append('files[]', realPng, { filename: 'test.png', contentType: 'image/png' });
-			return axios.post('https://uguu.se/upload', form, { headers: { ...form.getHeaders(), 'User-Agent': FETCH_UA }, timeout: 20000 });
-		}],
-		['freeimage.host', async () => {
-			const form = new FormData();
-			form.append('source', realPng.toString('base64'));
-			form.append('type', 'base64');
-			form.append('action', 'upload');
-			return axios.post('https://freeimage.host/api/1/upload', form, { headers: { ...form.getHeaders(), 'User-Agent': FETCH_UA }, timeout: 20000 });
-		}],
-	]) {
-		try {
-			const { data } = await upload();
-			console.log(`DIAG  ${label} upload: ${JSON.stringify(data).slice(0, 250)}`);
-		} catch (e) {
-			console.log(`DIAG  ${label} upload: HTTP ${e?.response?.status} ${describeErrorBody(e?.response?.data)}`);
-		}
-	}
 
 	console.log('\n========== SUMMARY ==========');
 	const pass = results.filter((r) => r.ok);
