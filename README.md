@@ -60,7 +60,33 @@ Downloaders • Group tools • AI • Media & fun commands — all wrapped in a
 
 <br/>
 
-> ✉️ On first deploy, set the **`PHONE_NUMBER`** environment variable to your own WhatsApp number (digits only, with country code — e.g. `2349037524605`) to log in via pairing code. Leave it unset to log in by scanning a QR code instead.
+## ⚙️ Configuration
+
+<div align="center">
+<img alt="env" src="https://img.shields.io/badge/.env-0b141a?style=for-the-badge&logo=gnubash&logoColor=25D366"/>
+</div>
+
+<br/>
+
+All variables below are **optional** — the bot boots fine with none of them set (QR login, session resets on every restart). Set them in your host's environment variables panel (Render → *Environment*), or in a local `.env` file if running on your own machine.
+
+```bash
+┌──(es-teams-v1)──[ ENVIRONMENT ]
+│
+├─ PHONE_NUMBER   = 2349037524605
+├─ SELF_URL       = https://your-app.onrender.com
+├─ SESSION_PATH   = /opt/render/project/data/ES_TEAMS-SESSION
+└─ MONGODB_URI    = mongodb+srv://user:pass@cluster.mongodb.net/dbname
+```
+
+| Variable | Required | What it does |
+|---|:---:|---|
+| `PHONE_NUMBER` | ❌ | Your WhatsApp number, digits only with country code, no `+` (e.g. `2349037524605`). Set it to log in via **pairing code**. Leave blank to log in by **scanning a QR code** instead. |
+| `SELF_URL` | ❌ | This deployed service's own public URL. When set, the bot pings itself every 5 minutes so free-tier hosts don't spin the service down from inactivity. |
+| `SESSION_PATH` | ❌ | Folder to store the WhatsApp session in. Only needed if you attached a **persistent disk** — set this to that disk's exact mount path so your login survives restarts. |
+| `MONGODB_URI` | ❌ | Alternative to `SESSION_PATH` — stores the session in MongoDB instead of a disk. Use one or the other, not both. |
+
+> 💡 Leaving `SESSION_PATH` and `MONGODB_URI` blank is fine — the bot just won't remember its login across restarts, so you'll need to re-pair each time it redeploys.
 
 <br/>
 
