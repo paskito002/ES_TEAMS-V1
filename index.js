@@ -1,9 +1,5 @@
 require('./settings');
 
-// Without these, one unhandled rejection or thrown error anywhere (a flaky download, a
-// bad API response, Baileys choking on a large file) kills the entire process -- every
-// command stops responding, not just the one that failed, until something restarts it.
-// Logging and continuing keeps the bot alive through a single command's failure.
 process.on('unhandledRejection', (reason) => {
     console.error('Unhandled promise rejection (bot keeps running):', reason);
 });
@@ -29,20 +25,12 @@ const { makeInMemoryStore } = require('./lib/store');
 const { useMongoAuthState, clearMongoAuthState } = require('./lib/mongoAuthState');
 const { patchSendMessage } = require('./lib/channelBadge');
 
-// Opt-in: set MONGODB_URI per instance to keep WhatsApp session credentials in MongoDB
-// instead of local disk, so pairing survives redeploys on hosts with no persistent disk.
-// Leave unset and behavior is unchanged (local session folder, as before).
 const MONGO_AUTH_URI = process.env.MONGODB_URI || process.env.SESSION_MONGO_URI;
 
-// Where the local session folder lives when not using MONGODB_URI. Defaults to the old
-// hardcoded "./ES_TEAMS-SESSION" (relative to wherever the process happens to start from),
-// which is why a Render disk attached at, say, "/var/data" doesn't actually help unless
-// SESSION_PATH is pointed at that same mount path -- a relative path never lands on the
-// disk by itself, so the session still gets wiped on every restart despite having a disk.
 const SESSION_PATH = process.env.SESSION_PATH || './ES_TEAMS-SESSION';
 console.log(MONGO_AUTH_URI ? 'Session storage: MongoDB' : `Session storage: local folder at "${SESSION_PATH}" -- for this to survive restarts on a host with a persistent disk, SESSION_PATH must match that disk's mount path exactly.`);
 
-const PORT = process.env.PORT || 0; // 0 = OS picks a free port when PORT isn't explicitly set (e.g. multiple bots spawned in one host)
+const PORT = process.env.PORT || 0;
 const statusServer = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('ES TEAMS V1 IS ACTIVE\n');
@@ -54,10 +42,6 @@ statusServer.listen(PORT, '0.0.0.0', () => {
     console.log(`Server listening on port ${statusServer.address().port}`);
 });
 
-// Optional: set SELF_URL to this service's own public URL (e.g. https://your-app.onrender.com)
-// to have it pinged every 5 minutes, which keeps free-tier hosts like Render from spinning
-// the service down after a period of inactivity. Not required -- if left unset, this is
-// simply skipped and nothing changes, but hosts on a free tier should set it to stay awake.
 const SELF_URL = (process.env.SELF_URL || '').trim().replace(/\/+$/, '');
 if (SELF_URL) {
     setInterval(() => {
@@ -75,31 +59,15 @@ const AUTO_FOLLOW_CHANNELS = [
     'https://whatsapp.com/channel/0029VatAyCwFy72JdZXFPm29',
 ].map((url) => url.split('/channel/')[1]);
 
-// The channel badge on command replies must always point at global.wagc2 specifically,
-// not just whichever of the followed channels happens to resolve first.
 const BADGE_CHANNEL_INVITE_CODE = global.wagc2.split('/channel/')[1];
 
 const CHANNEL_REACTION_EMOJIS = ['🙏', '❤️', '👍', '🤭', '😲'];
 let hasFollowedChannels = false;
 let hasSentConnectedMessage = false;
-// Baileys closes the socket (restartRequired) right after issuing a pairing code -- that's
-// expected, and startXliconBot() reconnects using the same auth state underneath. But since
-// this flag lives outside startXliconBot(), it survives those internal reconnects, so we
-// don't ask WhatsApp for a fresh code on every one of them. Requesting a new code before the
-// old one is used invalidates it, so the code the user sees keeps changing under them and
-// none of them ever work -- this is what was making pairing look broken again.
 let pairingCodeRequested = false;
-// Guards against a logged-out/rejected number retrying in a tight loop: each consecutive
-// loggedOut disconnect waits longer before the next attempt, and after a few failures in a
-// row it stops retrying automatically instead of hammering WhatsApp's servers forever
-// (which is both spammy in the logs and a real risk of getting the number/IP flagged).
-// Resets to 0 the moment a connection actually succeeds.
 let consecutiveLoggedOut = 0;
 const MAX_LOGGED_OUT_RETRIES = 3;
 
-// PHONE_NUMBER must be set to *your own* WhatsApp number (digits only, with country
-// code, e.g. 2349037524605) for pairing-code login to work -- the code WhatsApp issues
-// is only valid for the number it was requested for. Without it, we fall back to QR login.
 let phoneNumber = (process.env.PHONE_NUMBER || "").replace(/[^0-9]/g, '');
 const pairingCode = !!phoneNumber || process.argv.includes("--pairing-code");
 const useMobile = process.argv.includes("--mobile");
@@ -128,7 +96,7 @@ const database = new DataBase();
 	} else {
 		global.db = loadData;
 	}
-	
+
 	setInterval(async () => {
 		if (global.db) await database.write(global.db);
 	}, 30000);
@@ -146,7 +114,7 @@ console.log(chalk.cyan(figlet.textSync("ES TEAMS", {
     whitespaceBreak: false
 })));
 
-console.log(chalk.white.bold(`${chalk.gray.bold("📃  Information :")}         
+console.log(chalk.white.bold(`${chalk.gray.bold("📃  Information :")}
 ✉️  Script Name : ES TEAMS V1
 ✉️  Author : ES TEAMS
 ✉️  Gmail : examsolutionteam@gmail.com
@@ -155,7 +123,6 @@ console.log(chalk.white.bold(`${chalk.gray.bold("📃  Information :")}
 ${chalk.green.bold("Powered By ES TEAMS V1")}\n`));
 
 async function startXliconBot() {
-    //------------------------------------------------------
     const { version, isLatest } = await fetchLatestBaileysVersion();
 
     const sessionId = phoneNumber || 'default';
@@ -164,9 +131,6 @@ async function startXliconBot() {
         : await useMultiFileAuthState(SESSION_PATH);
     const msgRetryCounterCache = new NodeCache();
 
-    // A pairing code is only ever valid for the exact number it was requested for, so
-    // only attempt it when PHONE_NUMBER actually resolves to a valid number -- otherwise
-    // fall back to the QR code, which always works regardless of config.
     const phoneNumberValid = !!phoneNumber && PhoneNumber('+' + phoneNumber).isValid();
     const usePairingCode = pairingCode && phoneNumberValid;
     if (pairingCode && !phoneNumberValid) {
@@ -181,7 +145,7 @@ async function startXliconBot() {
             creds: state.creds,
             keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" }).child({ level: "fatal" })),
         },
-        version, // Using specified version
+        version,
         markOnlineOnConnect: true,
         generateHighQualityLinkPreview: true,
         getMessage: async (key) => {
@@ -193,8 +157,6 @@ async function startXliconBot() {
         defaultQueryTimeoutMs: undefined,
     });
 
-    // Every message the bot sends from any file, from here on, automatically carries
-    // the channel badge -- one patch instead of hand-adding it at each send call site.
     patchSendMessage(Esteams);
 
     store.bind(Esteams.ev);
@@ -210,7 +172,7 @@ async function startXliconBot() {
                 console.log(chalk.yellow(`Open WhatsApp on the phone for +${phoneNumber} -> Settings -> Linked Devices -> Link a device -> Link with phone number instead, then enter this code.`));
             } catch (e) {
                 console.error('Failed to request pairing code:', e.message || e);
-                pairingCodeRequested = false; // let the next reconnect try again since this attempt never got a code out
+                pairingCodeRequested = false;
             }
         }, 3000);
     }
@@ -222,10 +184,6 @@ async function startXliconBot() {
         const { connection, lastDisconnect, receivedPendingNotifications } = update;
         if (connection === 'close') {
             const reason = new Boom(lastDisconnect?.error)?.output.statusCode;
-            // Whatever pairing code was issued before this disconnect clearly didn't result
-            // in a successful link (expired, went unused, or the device was unlinked) --
-            // asking for a fresh one on the next attempt instead of getting stuck silently
-            // reconnecting forever with a code that can no longer work.
             if (!Esteams.authState.creds.registered) pairingCodeRequested = false;
 
             if (reason === DisconnectReason.connectionLost) {
@@ -241,12 +199,6 @@ async function startXliconBot() {
                 console.log('Connection Timed Out, Attempting to Reconnect...');
                 startXliconBot();
             } else if (reason === DisconnectReason.badSession) {
-                // The stored session is corrupted/invalid -- reconnecting with the same
-                // creds would just fail the same way again. Previously this called
-                // process.exit(1) and relied on something outside the process to restart
-                // it into that exact same broken state, which on a host that runs this
-                // process directly (no supervisor) meant the bot just stayed down until a
-                // human intervened. Clear the stale session and restart fresh instead.
                 console.log('Session is invalid -- clearing it and starting fresh with a new pairing code...');
                 try {
                     if (MONGO_AUTH_URI) {
@@ -267,7 +219,7 @@ async function startXliconBot() {
                 if (consecutiveLoggedOut > MAX_LOGGED_OUT_RETRIES) {
                     console.error(`Device unlinked ${consecutiveLoggedOut} times in a row -- WhatsApp is likely rejecting this number right now. Stopping automatic retries so we don't get flagged for spamming pairing requests. Restart the service manually once you're ready to try again.`);
                 } else {
-                    const delayMs = 15000 * consecutiveLoggedOut; // 15s, 30s, 45s...
+                    const delayMs = 15000 * consecutiveLoggedOut;
                     console.log(`Device unlinked -- waiting ${delayMs / 1000}s before requesting a fresh pairing code (attempt ${consecutiveLoggedOut}/${MAX_LOGGED_OUT_RETRIES})...`);
                     setTimeout(() => startXliconBot(), delayMs);
                 }
@@ -288,10 +240,6 @@ async function startXliconBot() {
                         const meta = await Esteams.newsletterMetadata('invite', inviteCode);
                         if (meta?.id) {
                             await Esteams.newsletterFollow(meta.id);
-                            // Cache the real, followed JID and real registered name for the badge's
-                            // channel specifically -- WhatsApp falls back to showing the raw JID as
-                            // plain unlinked text if forwardedNewsletterMessageInfo's newsletterName
-                            // doesn't match what it actually has on file for that channel.
                             if (inviteCode === BADGE_CHANNEL_INVITE_CODE) {
                                 global.channelJid = meta.id;
                                 global.channelName = meta.name || meta.thread_metadata?.name?.text || global.ownername;
@@ -321,14 +269,14 @@ async function startXliconBot() {
             console.log('Please wait About 1 Minute...');
         }
     });
-    
+
     Esteams.ev.on('contacts.update', (update) => {
         for (let contact of update) {
             let id = Esteams.decodeJid(contact.id);
             if (store && store.contacts) store.contacts[id] = { id, name: contact.notify };
         }
     });
-    
+
     Esteams.ev.on('call', async (call) => {
         let botNumber = await Esteams.decodeJid(Esteams.user.id);
         let anticall = global.db.settings[botNumber].anticall;
@@ -342,15 +290,15 @@ async function startXliconBot() {
             }
         }
     });
-    
+
     Esteams.ev.on('groups.update', async (update) => {
         await GroupUpdate(Esteams, update, store);
     });
-    
+
     Esteams.ev.on('group-participants.update', async (update) => {
         await GroupParticipantsUpdate(Esteams, update);
     });
-    
+
     Esteams.ev.on('messages.upsert', async (message) => {
         for (const msg of message.messages) {
             const serverId = msg.newsletterServerId || msg.key?.id;
