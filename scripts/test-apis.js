@@ -2,10 +2,15 @@ const api = require('../lib/esteamsApi');
 
 const results = [];
 
+const CHECK_TIMEOUT_MS = 45000;
+
 async function check(name, fn) {
 	const start = Date.now();
 	try {
-		const data = await fn();
+		const data = await Promise.race([
+			fn(),
+			new Promise((_, reject) => setTimeout(() => reject(new Error(`timed out after ${CHECK_TIMEOUT_MS}ms`)), CHECK_TIMEOUT_MS)),
+		]);
 		const ms = Date.now() - start;
 		results.push({ name, ok: true, ms, note: summarize(data) });
 		console.log(`PASS  ${name} (${ms}ms) ${summarize(data)}`);
