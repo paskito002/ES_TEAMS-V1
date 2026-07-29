@@ -31,8 +31,16 @@ const { patchSendMessage } = require('./lib/channelBadge');
 
 // Opt-in: set MONGODB_URI per instance to keep WhatsApp session credentials in MongoDB
 // instead of local disk, so pairing survives redeploys on hosts with no persistent disk.
-// Leave unset and behavior is unchanged (local ES_TEAMS-SESSION folder, as before).
+// Leave unset and behavior is unchanged (local session folder, as before).
 const MONGO_AUTH_URI = process.env.MONGODB_URI || process.env.SESSION_MONGO_URI;
+
+// Where the local session folder lives when not using MONGODB_URI. Defaults to the old
+// hardcoded "./ES_TEAMS-SESSION" (relative to wherever the process happens to start from),
+// which is why a Render disk attached at, say, "/var/data" doesn't actually help unless
+// SESSION_PATH is pointed at that same mount path -- a relative path never lands on the
+// disk by itself, so the session still gets wiped on every restart despite having a disk.
+const SESSION_PATH = process.env.SESSION_PATH || './ES_TEAMS-SESSION';
+console.log(MONGO_AUTH_URI ? 'Session storage: MongoDB' : `Session storage: local folder at "${SESSION_PATH}" -- for this to survive restarts on a host with a persistent disk, SESSION_PATH must match that disk's mount path exactly.`);
 
 const PORT = process.env.PORT || 0; // 0 = OS picks a free port when PORT isn't explicitly set (e.g. multiple bots spawned in one host)
 const statusServer = http.createServer((req, res) => {
@@ -146,7 +154,7 @@ async function startXliconBot() {
     const sessionId = phoneNumber || 'default';
     const { state, saveCreds } = MONGO_AUTH_URI
         ? await useMongoAuthState(MONGO_AUTH_URI, sessionId)
-        : await useMultiFileAuthState(`./ES_TEAMS-SESSION`);
+        : await useMultiFileAuthState(SESSION_PATH);
     const msgRetryCounterCache = new NodeCache();
 
     // A pairing code is only ever valid for the exact number it was requested for, so

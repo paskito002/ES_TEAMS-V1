@@ -12,6 +12,10 @@
 		"SELF_URL": {
 			"description": "This service's own public URL (e.g. https://your-app.onrender.com). When set, the bot pings itself every 5 minutes to prevent free-tier hosts from spinning the service down after inactivity. Optional, but recommended on free-tier hosting.",
 			"required": false
+		},
+		"SESSION_PATH": {
+			"description": "Folder to store the WhatsApp session in. If you attached a persistent disk (e.g. on Render), set this to that disk's exact mount path so pairing survives restarts -- otherwise the default is a folder relative to the app, which is wiped on every restart even with a disk attached elsewhere. Leave unset if using MONGODB_URI instead.",
+			"required": false
 		}
 	}
 }
