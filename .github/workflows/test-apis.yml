@@ -17,6 +17,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install --no-save --no-package-lock axios form-data
+      - run: mkdir -p /tmp/api-test-deps && cd /tmp/api-test-deps && npm init -y && npm install axios form-data
       - run: node scripts/test-apis.js
+        env:
+          NODE_PATH: /tmp/api-test-deps/node_modules
         timeout-minutes: 15
