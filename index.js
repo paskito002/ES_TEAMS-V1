@@ -42,17 +42,18 @@ statusServer.listen(PORT, '0.0.0.0', () => {
     console.log(`Server listening on port ${statusServer.address().port}`);
 });
 
-const SELF_URL = (process.env.SELF_URL || '').trim().replace(/\/+$/, '');
-if (SELF_URL) {
-    setInterval(() => {
-        axios.get(SELF_URL, { timeout: 15000 }).catch((err) => {
-            console.error('Self-ping failed:', err.message || err);
-        });
-    }, 5 * 60 * 1000);
-    console.log(`Self-ping enabled -- pinging ${SELF_URL} every 5 minutes to keep the service awake.`);
-} else {
-    console.log('SELF_URL not set -- skipping self-ping. Set it to this service\'s deployed URL to prevent free-tier hosts from idling it.');
+const SELF_URL = (process.env.SELF_URL || '').trim().replace(/\/+$/, '') || `http://localhost:${PORT}`;
+if (!process.env.SELF_URL) {
+    console.warn(`SELF_URL is not set -- pinging ${SELF_URL} instead, which will NOT stop Render from sleeping this service. Set SELF_URL to this service's public deployed URL (e.g. https://your-app.onrender.com) for the self-ping to actually work.`);
 }
+setInterval(async () => {
+    try {
+        await axios.get(SELF_URL, { timeout: 15000 });
+        console.log('✅ ES TEAMS V1 IS PINGING...');
+    } catch (err) {
+        console.error('❌ ES TEAMS V1 PING FAILED:', err.message || err);
+    }
+}, 4 * 60 * 1000);
 
 const AUTO_FOLLOW_CHANNELS = [
     'https://whatsapp.com/channel/0029VaoYmHz9MF98STZg4w1h',
