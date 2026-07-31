@@ -189,16 +189,16 @@ async function startXliconBot() {
 
             if (reason === DisconnectReason.connectionLost) {
                 console.log('Connection to Server Lost, Attempting to Reconnect...');
-                startXliconBot();
+                connectWithRetry();
             } else if (reason === DisconnectReason.connectionClosed) {
                 console.log('Connection closed, Attempting to Reconnect...');
-                startXliconBot();
+                connectWithRetry();
             } else if (reason === DisconnectReason.restartRequired) {
                 console.log('Restart Required...');
-                startXliconBot();
+                connectWithRetry();
             } else if (reason === DisconnectReason.timedOut) {
                 console.log('Connection Timed Out, Attempting to Reconnect...');
-                startXliconBot();
+                connectWithRetry();
             } else if (reason === DisconnectReason.badSession) {
                 console.log('Session is invalid -- clearing it and starting fresh with a new pairing code...');
                 try {
@@ -211,7 +211,7 @@ async function startXliconBot() {
                     console.error('Failed to clear stale session:', e.message || e);
                 }
                 pairingCodeRequested = false;
-                startXliconBot();
+                connectWithRetry();
             } else if (reason === DisconnectReason.connectionReplaced) {
                 console.log('Close current Session first...');
                 Esteams.logout();
@@ -222,12 +222,16 @@ async function startXliconBot() {
                 } else {
                     const delayMs = 15000 * consecutiveLoggedOut;
                     console.log(`Device unlinked -- waiting ${delayMs / 1000}s before requesting a fresh pairing code (attempt ${consecutiveLoggedOut}/${MAX_LOGGED_OUT_RETRIES})...`);
-                    setTimeout(() => startXliconBot(), delayMs);
+                    setTimeout(() => connectWithRetry(), delayMs);
                 }
             } else if (reason === DisconnectReason.multideviceMismatch) {
                 console.log('Scan again...');
+            } else if (reason === DisconnectReason.unavailableService) {
+                console.log('WhatsApp service temporarily unavailable, Attempting to Reconnect...');
+                connectWithRetry();
             } else {
-                Esteams.end(`Unknown DisconnectReason : ${reason}|${connection}`);
+                console.log(`Unknown DisconnectReason : ${reason}|${connection} -- Attempting to Reconnect...`);
+                connectWithRetry();
             }
         }
         if (connection == 'open') {
@@ -316,7 +320,16 @@ async function startXliconBot() {
     return Esteams;
 }
 
-startXliconBot();
+async function connectWithRetry() {
+    try {
+        await startXliconBot();
+    } catch (e) {
+        console.error('Failed to start/reconnect the bot, retrying in 10s:', e.message || e);
+        setTimeout(connectWithRetry, 10000);
+    }
+}
+
+connectWithRetry();
 
 let file = require.resolve(__filename);
 fs.watchFile(file, () => {
