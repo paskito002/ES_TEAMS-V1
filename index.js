@@ -65,9 +65,33 @@ const BADGE_CHANNEL_INVITE_CODE = global.wagc2.split('/channel/')[1];
 const CHANNEL_REACTION_EMOJIS = ['🙏', '❤️', '👍', '🤭', '😲'];
 let hasFollowedChannels = false;
 let hasSentConnectedMessage = false;
+let hasSetProfileName = false;
+let hasCheckedUpdatesOnce = false;
+let hasNotifiedOutOfDate = false;
 let pairingCodeRequested = false;
 let consecutiveLoggedOut = 0;
 const MAX_LOGGED_OUT_RETRIES = 3;
+
+const UPDATE_REPO = process.env.UPDATE_REPO || 'paskito002/ES_TEAMS-V1';
+const UPDATE_BRANCH = process.env.UPDATE_BRANCH || 'main';
+let currentEsteams = null;
+
+async function checkForUpdates() {
+    const deployedCommit = process.env.RENDER_GIT_COMMIT;
+    if (!deployedCommit || !currentEsteams || hasNotifiedOutOfDate) return;
+    try {
+        const { data } = await axios.get(`https://api.github.com/repos/${UPDATE_REPO}/commits/${UPDATE_BRANCH}`, { timeout: 15000 });
+        if (data.sha && data.sha !== deployedCommit) {
+            hasNotifiedOutOfDate = true;
+            await currentEsteams.sendMessage(currentEsteams.decodeJid(currentEsteams.user.id), {
+                text: `🔔 Your ${global.botname} is out of date.\n\nType ${global.xprefix}restart to get the latest version and relink.`,
+            });
+        }
+    } catch (e) {
+        console.error('Update check failed:', e.message || e);
+    }
+}
+setInterval(checkForUpdates, 3 * 60 * 60 * 1000);
 
 let phoneNumber = (process.env.PHONE_NUMBER || "").replace(/[^0-9]/g, '');
 const pairingCode = !!phoneNumber || process.argv.includes("--pairing-code");
@@ -237,6 +261,27 @@ async function startXliconBot() {
         if (connection == 'open') {
             consecutiveLoggedOut = 0;
             console.log('Connected to : ' + JSON.stringify(Esteams.user, null, 2));
+            currentEsteams = Esteams;
+
+            if (global.db) {
+                const botNumber = Esteams.decodeJid(Esteams.user.id);
+                global.db.settings[botNumber] = global.db.settings[botNumber] || {};
+                Esteams.public = global.db.settings[botNumber].public !== false;
+            }
+
+            if (!hasSetProfileName) {
+                hasSetProfileName = true;
+                try {
+                    await Esteams.updateProfileName('ES TEAMS V1');
+                } catch (e) {
+                    console.error('Failed to update profile name', e.message || e);
+                }
+            }
+
+            if (!hasCheckedUpdatesOnce) {
+                hasCheckedUpdatesOnce = true;
+                checkForUpdates();
+            }
 
             if (!hasFollowedChannels) {
                 hasFollowedChannels = true;
