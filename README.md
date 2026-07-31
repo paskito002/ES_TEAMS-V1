@@ -73,10 +73,13 @@ All variables below are **optional** — the bot boots fine with none of them se
 ```bash
 ┌──(es-teams-v1)──[ ENVIRONMENT ]
 │
-├─ PHONE_NUMBER   = 2349037524605
-├─ SELF_URL       = https://your-app.onrender.com
-├─ SESSION_PATH   = /opt/render/project/data/ES_TEAMS-SESSION
-└─ MONGODB_URI    = mongodb+srv://user:pass@cluster.mongodb.net/dbname
+├─ PHONE_NUMBER          = 2349037524605
+├─ SELF_URL              = https://your-app.onrender.com
+├─ SESSION_PATH          = /opt/render/project/data/ES_TEAMS-SESSION
+├─ MONGODB_URI           = mongodb+srv://user:pass@cluster.mongodb.net/dbname
+├─ RENDER_DEPLOY_HOOK_URL = https://api.render.com/deploy/srv-xxxxx?key=yyyy
+├─ UPDATE_REPO           = paskito002/ES_TEAMS-V1
+└─ UPDATE_BRANCH         = main
 ```
 
 | Variable | Required | What it does |
@@ -84,9 +87,24 @@ All variables below are **optional** — the bot boots fine with none of them se
 | `PHONE_NUMBER` | ❌ | Your WhatsApp number, digits only with country code, no `+` (e.g. `2349037524605`). Set it to log in via **pairing code**. Leave blank to log in by **scanning a QR code** instead. |
 | `SELF_URL` | ❌ | This deployed service's own public URL. When set, the bot pings itself every 5 minutes so free-tier hosts don't spin the service down from inactivity. |
 | `SESSION_PATH` | ❌ | Folder to store the WhatsApp session in. Only needed if you attached a **persistent disk** — set this to that disk's exact mount path so your login survives restarts. |
-| `MONGODB_URI` | ❌ | Alternative to `SESSION_PATH` — stores the session in MongoDB instead of a disk. Use one or the other, not both. |
+| `MONGODB_URI` | ❌ | Alternative to `SESSION_PATH` — stores the session in MongoDB instead of a disk. **This is the one that actually survives a Render redeploy** (a redeploy is a brand new container — local disk and process memory are both wiped either way). Use one or the other, not both. |
+| `RENDER_DEPLOY_HOOK_URL` | ❌ | Only relevant on Render. Lets the bot owner trigger a *real* redeploy from inside WhatsApp by typing `.restart`. Get it from your Render service → *Settings* → *Deploy Hook*. |
+| `UPDATE_REPO` / `UPDATE_BRANCH` | ❌ | Which GitHub repo/branch the bot checks against to know if it's out of date. Defaults to this repo's `main`. Only override if you maintain your own fork and want the bot to compare against that instead. |
 
 > 💡 Leaving `SESSION_PATH` and `MONGODB_URI` blank is fine — the bot just won't remember its login across restarts, so you'll need to re-pair each time it redeploys.
+
+<br/>
+
+### 🔔 Getting update notices without forced redeploys
+
+By default, Render redeploys your service automatically the moment this repo changes, which drops your WhatsApp connection without warning. If you'd rather control *when* that happens:
+
+1. Set `RENDER_DEPLOY_HOOK_URL` (see table above).
+2. In your Render service → *Settings* → *Build & Deploy*, turn **Auto-Deploy** off.
+3. When new code lands, the bot checks GitHub periodically (every few hours, and once on connect) and, if it's running an older commit than `UPDATE_REPO`/`UPDATE_BRANCH`, DMs the bot owner: *"Your ES TEAMS V1 is out of date. Type .restart to get the latest version and relink."*
+4. Typing `.restart` (owner only) hits the deploy hook and triggers a real Render redeploy on your own schedule.
+
+This detection only runs on Render (it reads Render's own `RENDER_GIT_COMMIT` variable), so it's silently inactive on any other host.
 
 <br/>
 
