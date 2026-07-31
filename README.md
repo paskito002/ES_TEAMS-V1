@@ -95,6 +95,23 @@ All variables below are **optional** — the bot boots fine with none of them se
 
 <br/>
 
+### ⏰ Actually staying online 24/7
+
+Two separate things put a bot to sleep, and they need different fixes.
+
+**1. The host spins the service down.** On Render's free tier a web service sleeps after ~15 minutes with no inbound traffic. The bot self-pings every 4 minutes to prevent this — but a self-ping **cannot wake an instance that has already gone to sleep**, because the sleeping process is the thing doing the pinging. The moment it sleeps for any reason (a deploy, a host restart, a brief network gap), nothing brings it back until someone opens the URL.
+
+The reliable fix is an **external** pinger:
+
+1. Set `SELF_URL` to your service's public URL. Check the logs — if you see `<-- LOCALHOST ONLY` next to the ping line, it is **not** set correctly and is doing nothing useful.
+2. Create a free monitor at [UptimeRobot](https://uptimerobot.com) or [cron-job.org] pointed at that same URL, on a 5-minute interval.
+
+That external hit both keeps the service awake *and* wakes it if it ever does sleep. The only way to remove the problem entirely rather than work around it is a paid instance, which never sleeps.
+
+**2. The WhatsApp session gets dropped.** If the session isn't stored somewhere permanent, every restart loses the login and demands a new pairing code. Set `MONGODB_URI` — it is the only option here that survives a redeploy, because a redeploy replaces the whole container (local disk included). The bot also now retries transient bad-session errors several times before giving up and asking to re-pair, so a brief server-side hiccup no longer costs you the login.
+
+<br/>
+
 ### 🔔 Getting update notices without forced redeploys
 
 By default, Render redeploys your service automatically the moment this repo changes, which drops your WhatsApp connection without warning. If you'd rather control *when* that happens:
