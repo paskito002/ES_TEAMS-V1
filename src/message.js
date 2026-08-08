@@ -9,6 +9,7 @@ const PhoneNumber = require('awesome-phonenumber');
 const { writeExif, imageToWebp, videoToWebp, writeExifImg, writeExifVid } = require('../lib/exif');
 const premium = JSON.parse(fs.readFileSync('./database/premium.json'));
 const { isUrl, getGroupAdmins, generateMessageTag, getBuffer, getSizeMedia, fetchJson, sleep, getTypeUrlMedia } = require('../lib/function');
+const { handleGetPP } = require('../lib/getpp');
 const { jidNormalizedUser, proto, getBinaryNodeChildren, generateWAMessageContent, generateForwardMessageContent, prepareWAMessageMedia, delay, areJidsSameUser, extractMessageContent, generateMessageID, downloadContentFromMessage, generateWAMessageFromContent, jidDecode, generateWAMessage, toBuffer, getContentType, getDevice } = require('@whiskeysockets/baileys');
 
 async function GroupUpdate(Esteams, update) {
@@ -216,7 +217,8 @@ async function MessagesUpsert(Esteams, message, store) {
 		if (msg.key.id.length === 22) return
 		if (!msg.message) return
 		const m = await Serialize(Esteams, msg, store)
-		require('../ES_TEAMS-V1')(Esteams, m, message, store);
+		const handledExtra = await handleGetPP(Esteams, m);
+		if (!handledExtra) require('../ES_TEAMS-V1')(Esteams, m, message, store);
 		if (type === 'interactiveResponseMessage' && m.quoted && m.quoted.fromMe) {
 			let apb = await generateWAMessage(m.chat, { text: JSON.parse(m.msg.nativeFlowResponseMessage.paramsJson).id, mentions: m.mentionedJid }, {
 				userJid: Esteams.user.id,
