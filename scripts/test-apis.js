@@ -1,7 +1,9 @@
+require('../settings');
 const api = require('../lib/esteamsApi');
+const configuredApiKey = String(process.env.ES_TEAMS_API_KEY || '').trim() || String(global.users?.esteams_apikey || '').trim();
 
-if (!process.env.ES_TEAMS_API_KEY) {
-	console.error('ES_TEAMS_API_KEY is not set.\nCreate a key at https://esteamstv.devs.surf/developers/api and run:\n  ES_TEAMS_API_KEY=estv_your_key node scripts/test-apis.js');
+if (!configuredApiKey) {
+	console.error('ES_TEAMS_API_KEY is not set.\nCreate a key at https://esteamstv.devs.surf/developers/api, then set ES_TEAMS_API_KEY in the environment or global.users.esteams_apikey in settings.js.');
 	process.exit(2);
 }
 

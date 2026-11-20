@@ -37,7 +37,7 @@ function createFakeSocket(id, options, registered) {
 	return sock;
 }
 
-async function loadBot({ env = {}, registered = false, random = 0 } = {}) {
+async function loadBot({ env = {}, registered = false, random = 0, settings = {} } = {}) {
 	const regState = { value: registered };
 	const clock = { now: 0, seq: 0, timers: [] };
 	const sockets = [];
@@ -46,6 +46,8 @@ async function loadBot({ env = {}, registered = false, random = 0 } = {}) {
 	const messagesUpsertCalls = [];
 	const watchers = [];
 	const exits = [];
+	const panelUser = { phonenumber: '', ...(settings.user || {}) };
+	const panelUsers = { esteams_apikey: '', ...(settings.users || {}) };
 
 	const saved = {
 		env: { ...process.env },
@@ -116,7 +118,7 @@ async function loadBot({ env = {}, registered = false, random = 0 } = {}) {
 		'./lib/function': { isUrl: () => true, generateMessageTag: () => 'T', getBuffer: async () => Buffer.alloc(1), getSizeMedia: async () => 1, fetchJson: async () => ({}), await: async () => {}, sleep: async () => {} },
 	};
 	const hadGlobals = {};
-	for (const [k, v] of Object.entries({ wagc2: 'https://whatsapp.com/channel/0029VaoYmHz9MF98STZg4w1h', ownername: 'Owner', botname: 'ES TEAMS V1', xprefix: '.', botImage: 'https://img.test/bot.jpg', owner: ['2349000000000'], db: undefined })) { hadGlobals[k] = global[k]; if (v !== undefined) global[k] = v; }
+	for (const [k, v] of Object.entries({ wagc2: 'https://whatsapp.com/channel/0029VaoYmHz9MF98STZg4w1h', ownername: 'Owner', botname: 'ES TEAMS V1', xprefix: '.', botImage: 'https://img.test/bot.jpg', owner: ['2349000000000'], user: panelUser, users: panelUsers, db: undefined })) { hadGlobals[k] = global[k]; if (v !== undefined) global[k] = v; }
 	global.channelJid = undefined;
 	delete global.db;
 

@@ -5,6 +5,14 @@ global.ytname = "YT: esteams"
 global.socialm = "GitHub: paskito002"
 global.location = "Nigeria, Cross River, Calabar"
 
+// VPS panel configuration. Keep these blank in Git and set them locally on the server.
+global.user = {
+	phonenumber: "",
+}
+global.users = {
+	esteams_apikey: "",
+}
+
 global.botname = ' `🌱𝐄𝐒 𝐓𝐄𝐀𝐌𝐒 𝐕𝟏🌱`'
 global.ownernumber = ['2349037524605']
 global.ownername = '𝗘𝗦 𝗧𝗘𝗔𝗠𝗦 𝗧𝗘𝗖𝗛'

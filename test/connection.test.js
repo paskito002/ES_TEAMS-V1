@@ -13,8 +13,14 @@ test.afterEach(() => { while (bots.length) bots.pop().restore(); });
 const SEC = 1000;
 const MIN = 60 * SEC;
 
+test('VPS panel settings.js phone number enables pairing-code login without PHONE_NUMBER env', async () => {
+	const bot = await boot({ settings: { user: { phonenumber: PHONE } } });
+	await bot.last.emit('connection.update', { qr: 'panel-ref' });
+	assert.deepEqual(bot.last.calls.find((c) => c.name === 'requestPairingCode').args, [PHONE]);
+});
+
 test('the pairing code is requested only when WhatsApp signals it is ready, never on a blind timer', async () => {
-	const bot = await boot({ env: { PHONE_NUMBER: PHONE } });
+	const bot = await boot({ env: { PHONE_NUMBER: PHONE }, settings: { user: { phonenumber: '2348012345678' } } });
 	assert.equal(bot.sockets.length, 1);
 	await bot.advance(30 * SEC);
 	assert.equal(bot.last.count('requestPairingCode'), 0, 'must wait for the qr signal');
@@ -244,6 +250,9 @@ test('startup tells the owner what is missing and how to fix it', async () => {
 	const configured = await boot({ registered: true, env: { ES_TEAMS_API_KEY: 'estv_x', MONGODB_URI: 'mongodb://x' } });
 	assert.doesNotMatch(configured.allLogs(), /ES_TEAMS_API_KEY is not set|No persistent session storage/);
 	assert.ok(!configured.allLogs().includes('estv_x'));
+	const panelConfigured = await boot({ registered: true, env: { MONGODB_URI: 'mongodb://x' }, settings: { users: { esteams_apikey: 'estv_panel_key' } } });
+	assert.doesNotMatch(panelConfigured.allLogs(), /ES_TEAMS_API_KEY is not set/);
+	assert.ok(!panelConfigured.allLogs().includes('estv_panel_key'));
 });
 
 test('self-ping is skipped on hosts that do not sleep, and kept on Render', async () => {

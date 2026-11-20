@@ -21,7 +21,7 @@
 
 ## About
 
-ES TEAMS V1 connects to WhatsApp using the multi-device protocol and provides download, search, group-management, AI, media, and utility commands. API-backed features use the ES Teams TV Developer API; the bot can still start without an API key, but those commands will not be available.
+ES TEAMS V1 connects to WhatsApp using the multi-device protocol and provides download, search, group-management, AI, media, and utility commands. API-backed features use the ES Teams TV Developer API. The bot can start without an API key, but API-backed commands require one.
 
 Send `.menu` in the bot chat to see the current command list. The default command prefix is `.`.
 
@@ -30,7 +30,7 @@ Send `.menu` in the bot chat to see the current command list. The default comman
 - QR-code login or pairing-code login.
 - Group administration and moderation tools.
 - Media downloads, search, lookups, and creative commands.
-- Optional API integration with clear quota and plan error messages.
+- Optional API integration with quota and plan error messages.
 - Persistent sessions through a disk/volume or MongoDB.
 - Reconnect backoff and pairing safeguards to reduce repeated login attempts.
 
@@ -46,45 +46,38 @@ cd ES_TEAMS-V1
 npm ci
 ```
 
-Set environment variables in your shell or hosting provider. This project does not automatically load a local `.env` file.
+Set variables in your shell or hosting provider. This project does not automatically load a local `.env` file.
 
 ```bash
-export ES_TEAMS_API_KEY="estv_your_key_here"  # needed for API-backed commands
-# Optional: digits only with country code; omit it to use QR-code login.
+export ES_TEAMS_API_KEY="estv_your_key_here"  # required for API-backed commands
+# Optional: digits only with country code; omit for QR-code login.
 export PHONE_NUMBER="2349037524605"
 npm start
 ```
 
-If `PHONE_NUMBER` is set to a valid number, the bot requests a pairing code when WhatsApp is ready. If it is omitted, the bot uses QR-code login. Keep the terminal available during first-time setup.
+When `PHONE_NUMBER` is set to a valid number, the bot requests a pairing code when WhatsApp is ready. If it is blank, the bot uses QR-code login. Keep the terminal available during first-time setup.
 
 ## API access
 
-Create a personal key at the [ES Teams TV Developer Portal](https://esteamstv.devs.surf/developers/api), add it as `ES_TEAMS_API_KEY`, and restart the bot. Each operator should use their own key. Never commit the key or paste it into public issues.
+Create a personal key at the [ES Teams TV Developer Portal](https://esteamstv.devs.surf/developers/api). Web-service deployments can set it as `ES_TEAMS_API_KEY`; VPS-panel deployments can enter it in `settings.js` as `global.users.esteams_apikey`. Each operator should use their own key. Never commit a real key or paste it into a public issue.
 
 The key is sent to the API in the `x-api-key` header. Some premium image and video features may require a Pro or Max plan. Certain image-analysis commands upload media to a public file host so the API can access it; do not use those commands with private images.
 
 ## Configuration
 
-Set these in your hosting provider's environment or variables panel:
+Environment variables take priority when present. For a VPS panel without a separate environment-variable screen, the bot can read the phone number and API key from `settings.js` instead.
 
-- `ES_TEAMS_API_KEY` — required for API-backed commands; create a key in the developer portal.
-- `PHONE_NUMBER` — optional WhatsApp number in digits-only international format. Omit it to use QR login.
-- `MONGODB_URI` — use MongoDB for session storage, particularly when the host's local filesystem is temporary.
-- `SESSION_PATH` — session directory. Set this to the mount path of a persistent disk or volume. Choose this **or** `MONGODB_URI`.
+- `ES_TEAMS_API_KEY` or `global.users.esteams_apikey` — key for API-backed commands.
+- `PHONE_NUMBER` or `global.user.phonenumber` — optional WhatsApp number in digits-only international format. Leave it blank to use QR-code login.
+- `MONGODB_URI` — optional MongoDB session storage, useful when the host's local filesystem is temporary.
+- `SESSION_PATH` — optional session directory. Point it at persistent storage if the host's application folder is cleared during redeploys.
 - `SELF_URL` — optional public URL used by the self-ping on hosts that suspend idle services. It cannot wake a process that is already stopped.
 
-Other optional controls:
+Additional options include `AUTO_FOLLOW_CHANNELS` (default `true`), `SET_PROFILE_NAME` (default `false`), `POST_LINK_DELAY_MS` (default `180000` milliseconds), `MARK_ONLINE` (default `false`), `RENDER_DEPLOY_HOOK_URL` for the owner-only Render `.restart` action, and `ES_TEAMS_API_BASE_URL` for development or testing.
 
-- `AUTO_FOLLOW_CHANNELS` defaults to `true`; set it to `false` to disable channel follows.
-- `SET_PROFILE_NAME` defaults to `false`; set it to `true` to allow the bot to update the WhatsApp profile name after connecting.
-- `POST_LINK_DELAY_MS` controls the delay before post-link actions; the default is `180000` (3 minutes).
-- `MARK_ONLINE` defaults to `false`.
-- `RENDER_DEPLOY_HOOK_URL` enables the owner-only `.restart` deploy action on Render.
-- `ES_TEAMS_API_BASE_URL` overrides the API base URL for development or testing.
+## WEB SERVICE DEPLOYMENT
 
-## Deploy
-
-The repository root contains a Dockerfile. Select the Docker runtime where the host supports it; adding a Dockerfile does not automatically change an existing service's runtime.
+Use the hosting provider's environment or variables panel for `ES_TEAMS_API_KEY` and, if using pairing-code login, `PHONE_NUMBER`. Add persistent storage with `SESSION_PATH` or use `MONGODB_URI` to retain the WhatsApp session. The repository includes a root Dockerfile; select Docker as the service runtime when you want to use it.
 
 ### Render
 
@@ -104,7 +97,30 @@ heroku stack:set container -a YOUR_APP_NAME
 
 Add `ES_TEAMS_API_KEY` and any login settings as config vars. Heroku's local filesystem is not persistent, so use `MONGODB_URI` to keep the session between restarts. See [Heroku's container deployment guide](https://devcenter.heroku.com/articles/build-docker-images-heroku-yml).
 
-All hosts provide `PORT`; the bot listens on it automatically. Run only one instance per WhatsApp account. Without persistent session storage, a restart or redeploy may require linking again.
+All three platforms provide `PORT`; the bot listens on it automatically. Run only one instance per WhatsApp account. Without persistent session storage, a restart or redeploy may require linking again.
+
+## VPS PANEL DEPLOYMENT
+
+This method is for VPS panels that let you deploy or run the repository but do not provide a separate environment-variable screen. The phone number and API key are read directly from the bot's `settings.js` file.
+
+1. Deploy or upload this repository to the VPS panel. Use Node.js 24.x and set the start command to `npm start`.
+2. Open `settings.js` in the panel's file editor. Edit the existing blank values near the top of the file:
+
+   ```js
+   global.user = {
+     phonenumber: "2349037524605", // optional; leave blank to use QR login
+   };
+   global.users = {
+     esteams_apikey: "estv_your_key_here", // required only for API-backed commands
+   };
+   ```
+
+3. Save the file and restart the bot. Read the panel's console/logs for the pairing code or QR login instructions.
+4. Keep `ES_TEAMS-SESSION` on persistent VPS storage. If the panel replaces the application directory on redeploy, configure `SESSION_PATH` to a persistent directory or use MongoDB if the panel supports `MONGODB_URI`.
+
+The settings file is plain text. Do not commit real phone numbers or API keys to GitHub, especially in a public repository. Configure them only in the VPS's local copy, restrict access to the panel and server files, and keep a secure backup. A later Git pull or redeploy may replace local edits to `settings.js`, so reapply your private values if the panel overwrites the file.
+
+If both sources are set, the environment variable takes priority over the matching `settings.js` value. The environment-based web-service setup therefore continues to work unchanged.
 
 ## Commands
 
@@ -120,8 +136,8 @@ Some legacy commands use their original public services. Their availability depe
 
 ## Connection and account safety
 
-- Keep exactly one running instance connected to a WhatsApp account. Overlapping instances can invalidate a session.
-- Store the session on a persistent disk/volume or in MongoDB so a redeploy does not force a new login.
+- Run exactly one instance connected to a WhatsApp account. Overlapping instances can invalidate a session.
+- Keep the session on persistent storage so a redeploy does not force a new login.
 - Pairing attempts are rate-limited. If WhatsApp reports a pairing limit, stop retrying and wait before attempting again.
 - No unofficial WhatsApp client can guarantee that an account will never be restricted. Use a number you control and follow WhatsApp's terms.
 
@@ -133,10 +149,10 @@ Run the offline test suite with:
 npm test
 ```
 
-To run live API checks, provide a valid key:
+For live API checks, configure `ES_TEAMS_API_KEY` in the environment or `global.users.esteams_apikey` in `settings.js`, then run:
 
 ```bash
-ES_TEAMS_API_KEY="estv_your_key_here" npm run test:apis
+npm run test:apis
 ```
 
 The live checks contact the Developer API. Some plan-specific endpoints may be skipped when the key does not have the required plan.
