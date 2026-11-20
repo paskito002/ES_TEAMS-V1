@@ -1,5 +1,5 @@
 {
-  "name": "ES TEAMS",
+  "name": "es-teams-v1",
   "version": "1.1.0",
   "description": "Bot WhatsApp Using Lib Baileys Multi Device",
   "main": "start.js",
@@ -15,7 +15,7 @@
   "author": "ES TEAMS",
   "license": "MIT",
   "engines": {
-    "node": ">=20.0.0"
+    "node": "24.x"
   },
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
@@ -109,5 +109,11 @@
   "directories": {
     "lib": "lib",
     "src": "src"
+  },
+  "allowScripts": {
+    "@ffmpeg-installer/linux-x64@4.1.0": true,
+    "@whiskeysockets/baileys@7.0.0-rc13": true,
+    "es5-ext@0.10.64": true,
+    "protobufjs@7.6.6": true
   }
 }

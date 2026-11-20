@@ -127,33 +127,23 @@ Most downloader, search, lookup and tool commands call the **ES Teams TV Develop
 
 ### 🧭 Hosting guides
 
-#### Render (the platform this bot has been deployed on)
+#### Render
 
-1. Create a **Web Service** from your fork of this repo (Docker or Node both work).
-2. Open the service → **Environment** and add `ES_TEAMS_API_KEY`, `PHONE_NUMBER` and **`MONGODB_URI`** (or attach a persistent disk and set `SESSION_PATH` to its mount path).
-3. Optional on Render: `SELF_URL` (keeps the free tier awake, see below) and `RENDER_DEPLOY_HOOK_URL` (for `.restart`).
-4. Deploy, open **Logs**, and enter the pairing code in WhatsApp → *Linked devices* within a minute.
+The repository includes a root `Dockerfile` with Node.js 24 and the system media tools used by the bot. For a Docker deploy, create a **Web Service**, select **Docker** as its runtime, and use `Dockerfile` as the Dockerfile path. A service currently configured with Render's native Node runtime will not automatically switch to Docker just because the file exists; create a Docker service or change its runtime if Render allows it. For the existing native Node service, set **Build Command** to `npm ci` and **Start Command** to `npm start`.
+
+Set `ES_TEAMS_API_KEY` and `PHONE_NUMBER` in the service's **Environment**. For a persistent session, attach a Render disk and set `SESSION_PATH` to a directory on that disk, for example `/var/data/ES_TEAMS-SESSION` when the disk is mounted at `/var/data`. Alternatively, set `MONGODB_URI` and do not set `SESSION_PATH`. `SELF_URL` and `RENDER_DEPLOY_HOOK_URL` are optional.
 
 #### Railway
 
-The bot's code is host-independent — it listens on the `PORT` Railway provides, reads everything from environment variables, and Railway can build the included `Dockerfile`. **This bot has only been run on Render; Railway support below comes from the code, and I have not verified it on a live Railway deployment.**
+Deploy the repository from GitHub. Railway detects the root `Dockerfile` and uses it. Add `ES_TEAMS_API_KEY` and `PHONE_NUMBER` under **Variables**. Add a Volume to keep the WhatsApp session; the app detects `RAILWAY_VOLUME_MOUNT_PATH` and stores the session in `<volume>/ES_TEAMS-SESSION`. Do not set `SESSION_PATH` unless you want to override that location. As an alternative to a Volume, set `MONGODB_URI`.
 
-1. In Railway: **New Project → Deploy from GitHub repo** and pick your fork. Railway builds the included `Dockerfile`.
-2. Open the service → **Variables** and add `ES_TEAMS_API_KEY` and `PHONE_NUMBER`.
-3. Keep the session so you only link **once** — choose one:
-   - **Volume (recommended on Railway):** add a **Volume** to the service. The bot detects Railway's `RAILWAY_VOLUME_MOUNT_PATH` automatically and stores the session in `<volume>/ES_TEAMS-SESSION`. (Setting `SESSION_PATH` yourself overrides this.)
-   - **MongoDB:** set `MONGODB_URI` instead.
-4. Deploy, open **Deploy Logs**, and enter the pairing code in WhatsApp within a minute.
+#### Heroku
 
-| Feature | Render | Railway |
-|---|:---:|:---:|
-| Bot connects and runs commands | ✅ | ✅ (host-independent code) |
-| Session in MongoDB (`MONGODB_URI`) | ✅ | ✅ |
-| Session on a persistent disk | ✅ via `SESSION_PATH` | ✅ automatic via volume, or `SESSION_PATH` |
-| `SELF_URL` self-ping | used (free tier sleeps) | not needed — skipped automatically unless you set it |
-| `.restart` | real redeploy (needs `RENDER_DEPLOY_HOOK_URL`) | restarts the bot process only (no redeploy hook support) |
-| "You're out of date" notices | ✅ | inactive (reads Render's `RENDER_GIT_COMMIT`) |
-| `Procfile` (pm2) | n/a | not used — Railway builds the `Dockerfile` |
+The included `heroku.yml` builds the same Dockerfile. Set the app stack to `container` before deploying (for example, `heroku stack:set container -a YOUR_APP_NAME`). Set `ES_TEAMS_API_KEY` and `PHONE_NUMBER` as config vars. Heroku's local filesystem is not persistent, so set `MONGODB_URI` if you want to avoid pairing again after a dyno restart. The included `Procfile` also defines `npm start` for buildpack-based deployments.
+
+All three platforms provide `PORT`; the app listens on it automatically. `ES_TEAMS_API_KEY` is needed for API-backed commands, and `PHONE_NUMBER` enables pairing-code login (leave it unset to use QR login). Use either a persistent disk/volume or `MONGODB_URI` to retain the WhatsApp session across restarts. Do not run more than one bot instance for the same WhatsApp number.
+
+`SELF_URL` is only useful on hosts that sleep due to inactivity. `UPDATE_REPO` and `UPDATE_BRANCH` default to this repository's `main`; the update-notice feature uses Render's `RENDER_GIT_COMMIT` and is inactive on Railway and Heroku.
 
 <br/>
 

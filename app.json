@@ -1,5 +1,6 @@
 {
 	"name": "ES_TEAMS-V1",
+	"stack": "container",
 	"description": "WhatsApp Bot Using Lib Baileys",
 	"repository": "https://github.com/paskito002/ES_TEAMS-V1",
 	"logo": "https://node-js-sample.herokuapp.com/node.png",

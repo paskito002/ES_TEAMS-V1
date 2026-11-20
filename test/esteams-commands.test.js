@@ -23,6 +23,8 @@ test.before(async () => {
 	mock = await start();
 	process.env.ES_TEAMS_API_BASE_URL = mock.base;
 	process.env.ES_TEAMS_API_KEY = TEST_KEY;
+	const realGet = axios.get;
+	axios.get = async (url, ...rest) => (String(url).startsWith('https://apis.davidcyril.name.ng') ? Promise.reject(new Error('Legacy API disabled in tests')) : realGet(url, ...rest));
 	const realPost = axios.post;
 	axios.post = async (url, ...rest) => (String(url).includes('uguu.se') ? { data: { files: [{ url: 'https://files.test/up.jpg' }] } } : realPost(url, ...rest));
 	const realHead = axios.head;
