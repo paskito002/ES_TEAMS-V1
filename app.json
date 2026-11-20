@@ -3,8 +3,14 @@
 	"description": "WhatsApp Bot Using Lib Baileys",
 	"repository": "https://github.com/paskito002/ES_TEAMS-V1",
 	"logo": "https://node-js-sample.herokuapp.com/node.png",
-	"keywords": ["multi-device"],
+	"keywords": [
+		"multi-device"
+	],
 	"env": {
+		"ES_TEAMS_API_KEY": {
+			"description": "REQUIRED for commands that use the ES Teams TV API. Every bot owner uses their own key: create one at https://esteamstv.devs.surf/developers/api and paste it here. Never share or commit it.",
+			"required": true
+		},
 		"PHONE_NUMBER": {
 			"description": "Your own WhatsApp number for pairing-code login, digits only with country code, no + or spaces (e.g. 2349037524605). Leave empty to log in by scanning a QR code instead.",
 			"required": false
@@ -16,7 +22,22 @@
 		"SESSION_PATH": {
 			"description": "Folder to store the WhatsApp session in. If you attached a persistent disk (e.g. on Render), set this to that disk's exact mount path so pairing survives restarts -- otherwise the default is a folder relative to the app, which is wiped on every restart even with a disk attached elsewhere. Leave unset if using MONGODB_URI instead.",
 			"required": false
+		},
+		"MONGODB_URI": {
+			"description": "Optional. MongoDB connection string used to store the WhatsApp session so you do not have to link again after every restart or redeploy. Recommended on hosts without a persistent disk.",
+			"required": false
+		},
+		"SET_PROFILE_NAME": {
+			"description": "Optional. Set to true to let the bot rename your WhatsApp profile to ES TEAMS V1 a few minutes after connecting. Off by default.",
+			"required": false
+		},
+		"AUTO_FOLLOW_CHANNELS": {
+			"description": "Optional. Set to false to stop the bot following the ES TEAMS WhatsApp channels after connecting. On by default (it waits a few minutes first).",
+			"required": false
+		},
+		"MARK_ONLINE": {
+			"description": "Optional. Set to true to mark the account online as soon as the bot connects. Off by default.",
+			"required": false
 		}
 	}
 }
-                  

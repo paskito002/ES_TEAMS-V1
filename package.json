@@ -5,7 +5,9 @@
   "main": "start.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node start.js"
+    "start": "node start.js",
+    "test": "node scripts/run-tests.js",
+    "test:apis": "node scripts/test-apis.js"
   },
   "keywords": [
     "Whatsapp Bot by Es Teams"

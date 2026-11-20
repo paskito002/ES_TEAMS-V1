@@ -21,4 +21,5 @@ jobs:
       - run: node scripts/test-apis.js
         env:
           NODE_PATH: /tmp/api-test-deps/node_modules
+          ES_TEAMS_API_KEY: ${{ secrets.ES_TEAMS_API_KEY }}
         timeout-minutes: 15

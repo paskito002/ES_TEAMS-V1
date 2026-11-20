@@ -5,3 +5,5 @@ ES_TEAMS-SESSION/pre-key-*.json
 ES_TEAMS-SESSION/session-*.json
 ES_TEAMS-SESSION/sender-key*.json
 npm-debug.log*
+.env
+.env.*
