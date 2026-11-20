@@ -44,23 +44,6 @@ test('a missing key fails before any request and tells the owner where to get on
 	assert.equal(mock.requests.length, 0);
 });
 
-test('uses the settings.js API key when the environment value is blank, but prefers the environment when set', async () => {
-	const previousUsers = global.users;
-	global.users = { esteams_apikey: TEST_KEY };
-	try {
-		process.env.ES_TEAMS_API_KEY = '';
-		await api.getJoke();
-		assert.equal(last().key, TEST_KEY);
-
-		process.env.ES_TEAMS_API_KEY = 'estv_wrong_key_value';
-		await assert.rejects(api.getJoke(), (err) => err.code === 'BAD_KEY');
-		assert.equal(last().key, 'estv_wrong_key_value');
-	} finally {
-		if (previousUsers === undefined) delete global.users;
-		else global.users = previousUsers;
-	}
-});
-
 test('a wrong key is reported clearly and the key never leaks into the error', async () => {
 	process.env.ES_TEAMS_API_KEY = 'estv_wrong_key_value';
 	await assert.rejects(api.getJoke(), (err) => {

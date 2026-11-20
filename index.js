@@ -5,8 +5,7 @@ require("./settings"), process.on("unhandledRejection", (_0x4d123d) => {
 });
 const fs = require("fs"), http = require("http"), pino = require("pino"), path = require("path"), axios = require("axios"), chalk = require("chalk"), figlet = require("figlet"), readline = require("readline"), FileType = require("file-type"), { exec } = require("child_process"), { Boom } = require("@hapi/boom"), NodeCache = require("node-cache"), PhoneNumber = require("awesome-phonenumber"), { default: makeWASocket, useMultiFileAuthState, Browsers, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, jidNormalizedUser, proto, getAggregateVotesInPollMessage } = require("@whiskeysockets/baileys"), { makeInMemoryStore } = require("./lib/store"), { useMongoAuthState, clearMongoAuthState } = require("./lib/mongoAuthState"), { patchSendMessage } = require("./lib/channelBadge"), MONGO_AUTH_URI = process.env.MONGODB_URI || process.env.SESSION_MONGO_URI, SESSION_PATH = process.env.SESSION_PATH || (process.env.RAILWAY_VOLUME_MOUNT_PATH ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, "ES_TEAMS-SESSION") : "./ES_TEAMS-SESSION");
 console.log(MONGO_AUTH_URI ? "Session storage: MongoDB" : 'Session storage: local folder at "' + SESSION_PATH + `" -- for this to survive restarts on a host with a persistent disk, SESSION_PATH must match that disk's mount path exactly.`);
-const configuredApiKey = () => String(process.env.ES_TEAMS_API_KEY || "").trim() || String(global.users?.esteams_apikey || "").trim();
-!configuredApiKey() && console.warn("ES_TEAMS_API_KEY is not set -- API commands need your own key: https://esteamstv.devs.surf/developers/api (set ES_TEAMS_API_KEY in your host's environment, or global.users.esteams_apikey in settings.js for a VPS panel, then restart).");
+!process.env.ES_TEAMS_API_KEY && console.warn("ES_TEAMS_API_KEY is not set -- commands that use the ES Teams TV API will reply with setup instructions. Every bot owner needs their own key: https://esteamstv.devs.surf/developers/api (then set ES_TEAMS_API_KEY in your host's environment variables and restart).");
 !MONGO_AUTH_URI && !process.env.SESSION_PATH && !process.env.RAILWAY_VOLUME_MOUNT_PATH && console.warn("No persistent session storage is configured (MONGODB_URI, SESSION_PATH or a Railway volume). If this host's disk is wiped on restart or redeploy, the bot has to be linked again every time -- and repeated link attempts are the most common reason WhatsApp flags numbers. Set MONGODB_URI, or mount a persistent disk/volume and point SESSION_PATH at it.");
 const PORT = process.env.PORT || 0, statusServer = http.createServer((statusReq, statusRes) => {
   statusRes.writeHead(200, { "Content-Type": "text/plain" }), statusRes.end("ES TEAMS V1 IS ACTIVE\n");
@@ -42,8 +41,7 @@ async function checkForUpdates() {
   }
 }
 setInterval(checkForUpdates, 3 * 60 * 60 * 1e3);
-const configuredPhoneNumber = String(process.env.PHONE_NUMBER || "").trim() || String(global.user?.phonenumber || "").trim();
-let phoneNumber = configuredPhoneNumber.replace(/[^0-9]/g, "");
+let phoneNumber = (process.env.PHONE_NUMBER || "").replace(/[^0-9]/g, "");
 const pairingCode = !!phoneNumber || process.argv.includes("--pairing-code"), useMobile = process.argv.includes("--mobile"), rl = readline.createInterface({ input: process.stdin, output: process.stdout }), store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream: "store" }) }), question = (_0x2e8c11) => new Promise((_0x261f05) => rl.question(_0x2e8c11, _0x261f05));
 let owner = JSON.parse(fs.readFileSync("./src/owner.json"));
 global.api = (_0x42d044, _0x6b2dc5 = "/", _0x1ed3ab = {}, _0x317be4) => (_0x42d044 in global.APIs ? global.APIs[_0x42d044] : _0x42d044) + _0x6b2dc5 + (_0x1ed3ab || _0x317be4 ? "?" + new URLSearchParams(Object.entries({ ..._0x1ed3ab, ..._0x317be4 ? { [_0x317be4]: global.APIKeys[_0x42d044 in global.APIs ? global.APIs[_0x42d044] : _0x42d044] } : {} })) : "");
@@ -251,7 +249,7 @@ function onConnectionOpen(sock) {
 async function startXliconBot() {
   retireSocket(currentSock);
   const { version: waVersion, isLatest: _0x161d22 } = await fetchLatestBaileysVersion(), authKey = phoneNumber || "default", { state: authState, saveCreds } = MONGO_AUTH_URI ? await useMongoAuthState(MONGO_AUTH_URI, authKey) : await useMultiFileAuthState(SESSION_PATH), retryCache = new NodeCache(), phoneValid = !!phoneNumber && PhoneNumber("+" + phoneNumber).isValid(), usePairing = pairingCode && phoneValid;
-  pairingCode && !phoneValid && console.error(chalk.red('Invalid or missing PHONE_NUMBER ("' + phoneNumber + '"). Set PHONE_NUMBER in your host environment or global.user.phonenumber in settings.js to YOUR WhatsApp number, digits only, with country code, no + or spaces (e.g. 2349037524605), then restart. Falling back to QR code login.'));
+  pairingCode && !phoneValid && console.error(chalk.red('Invalid or missing PHONE_NUMBER ("' + phoneNumber + '"). Set the PHONE_NUMBER environment variable to YOUR WhatsApp number, digits only, with country code, no + or spaces (e.g. 2349037524605), then redeploy. Falling back to QR code login.'));
   const sock = makeWASocket({ logger: pino({ level: "silent" }), printQRInTerminal: !usePairing, browser: Browsers.windows("Firefox"), auth: { creds: authState.creds, keys: makeCacheableSignalKeyStore(authState.keys, pino({ level: "fatal" }).child({ level: "fatal" })) }, version: waVersion, markOnlineOnConnect: MARK_ONLINE, generateHighQualityLinkPreview: true, getMessage: async (_0x47ee4a) => {
     {
       let _0x3d530d = jidNormalizedUser(_0x47ee4a.remoteJid), _0x1440bf = await store.loadMessage(_0x3d530d, _0x47ee4a.id);
